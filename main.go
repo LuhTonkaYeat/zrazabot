@@ -59,7 +59,7 @@ func main() {
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 3600 && lastUsed != 0 {
-			return c.Send(fmt.Sprintf("⏰ *%s*, сначала нагуляй аппетyeat!!!\n🍽 /zraza", userName), tele.ModeMarkdown)
+			return c.Send(fmt.Sprintf("⏰ *%s*, сначала нагуляй аппетyeat!!!\nПопробуй еще раз примерно через час\n\n 🍽 /zraza", userName), tele.ModeMarkdown)
 		}
 
 		if rand.Intn(10) == 0 {
