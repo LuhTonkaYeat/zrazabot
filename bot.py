@@ -1,9 +1,6 @@
 import random
 import sqlite3
 import os
-os.environ['HTTP_PROXY'] = ''
-os.environ['HTTPS_PROXY'] = ''
-os.environ['ALL_PROXY'] = ''
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
@@ -54,14 +51,18 @@ async def zraza_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"🍽 {user.first_name} съел {eaten} зразу(ы)!\n"
-        f"📊 *Всего за историю:* {total} зраз.",
+        f"📊 *Всего съедено:* {total} зраз.",
         parse_mode="Markdown"
     )
 
 
 def main():
     init_db()
-    TOKEN = "8693360984:AAHx4PYb38xQ1pnEVtKTWQcmR7s_vCp2kkA"
+    TOKEN = os.getenv("BOT_TOKEN")
+
+    if not TOKEN:
+        print("Ошибка: переменная BOT_TOKEN не установлена")
+        return
 
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("zraza", zraza_command))
