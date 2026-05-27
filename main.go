@@ -14,14 +14,14 @@ import (
 )
 
 var garnishes = []string{
-	"макарон с подливкой",
-	"риса с подливкой",
+	"макароны с подливкой",
+	"рис с подливкой",
 	"пюре с подливкой",
-	"гречки с подливкой",
+	"гречку с подливкой",
 }
 
 var rarePhrases = []string{
-	"%s сожрал говнеца! сегодня без зраз!\n---> /zraza",
+	"%s только что навернул говнеца! сегодня без зраз!\nГолоден? ---> /zraza",
 }
 
 func getDBPath() string {
@@ -58,7 +58,7 @@ func main() {
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 3600 && lastUsed != 0 {
-			return c.Send(fmt.Sprintf("*%s*, сначала нагуляй аппетyeat!!!\n---> /zraza", userName), tele.ModeMarkdown)
+			return c.Send(fmt.Sprintf("*%s*, сначала нагуляй аппет'yeat!!!\nГолоден? ---> /zraza", userName), tele.ModeMarkdown)
 		}
 
 		if rand.Intn(10) == 0 {
@@ -74,8 +74,8 @@ func main() {
 		updateLastUsed(userID, now)
 
 		message := fmt.Sprintf(
-			"*%s* только что сожрал %d порций %s и зраза!!!\nА всего он уничтожил %d порций!\n\nГолоднен? ---> /zraza",
-			userName, eaten, garnish, total,
+			"*%s* только что сожрал %s и %d зраз!!!\nА всего он уничтожил %d зраз!\n\nГолоден? ---> /zraza",
+			userName, garnish, eaten, total,
 		)
 
 		return c.Send(message, tele.ModeMarkdown)
