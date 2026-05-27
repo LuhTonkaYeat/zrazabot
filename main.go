@@ -155,7 +155,7 @@ func getLastUsed(userID int64) int64 {
 	defer db.Close()
 
 	var lastUsed int64
-	err = db.QueryRow("SELECT last_used FROM user s WHERE user_id = ?", userID).Scan(&lastUsed)
+	err = db.QueryRow("SELECT last_used FROM users WHERE user_id = ?", userID).Scan(&lastUsed)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0
