@@ -1,3 +1,5 @@
+# CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o zrazabot main.go
+
 FROM alpine:latest
 
 WORKDIR /app
