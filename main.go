@@ -59,11 +59,11 @@ func main() {
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 3600 && lastUsed != 0 {
-			return c.Send(fmt.Sprintf("⏰ _*%s*, сначала нагуляй аппетyeat!!!_\n_Попробуй еще раз примерно через час_\n\n🍽 /zraza", userName), tele.ModeMarkdown)
+			return c.Send(fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Попробуй еще раз примерно через час_\n\n🍽 /zraza", userName), tele.ModeMarkdown)
 		}
 
 		if rand.Intn(10) == 0 {
-			phrase := fmt.Sprintf(rarePhrases[0], "*"+userName+"*")
+			phrase := fmt.Sprintf(rarePhrases[0], userName)
 			updateLastUsed(userID, now)
 			return c.Send(phrase, tele.ModeMarkdown)
 		}
@@ -75,7 +75,7 @@ func main() {
 		updateLastUsed(userID, now)
 
 		message := fmt.Sprintf(
-			"_*%s* только что сожрал %d зраз и %s!!!_\n📊 _А всего им уничтожено - %d зраз!_\n\n🍽 _Голоден? /zraza_",
+			"_%s только что сожрал %d зраз и %s!!!_\n📊 _А всего им уничтожено - %d зраз!_\n\n🍽 _Голоден? /zraza_",
 			userName, eaten, garnish, total,
 		)
 
