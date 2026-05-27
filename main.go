@@ -14,21 +14,22 @@ import (
 )
 
 var garnishes = []string{
-	"макароны с подливкой",
-	"рис с подливкой",
-	"пюре с подливкой",
-	"гречку с подливкой",
+	"🍝 макароны с подливкой",
+	"🍚 рис с подливкой",
+	"🥔 пюре с подливкой",
+	"🌾 гречку с подливкой",
 }
 
 var rarePhrases = []string{
-	"%s только что навернул говнеца! сегодня без зраз!\nГолоден? ---> /zraza",
+	"💩 %s только что навернул говнеца! сегодня без зраз!\n🍽 Голоден? /zraza",
 }
 
 func getDBPath() string {
-	if dataDir := os.Getenv("DATA_DIR"); dataDir != "" {
-		return filepath.Join(dataDir, "zrazy.db")
+	dataDir := "/app/data"
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		log.Println("Warning: cannot create data dir:", err)
 	}
-	return "zrazy.db"
+	return filepath.Join(dataDir, "zrazy.db")
 }
 
 func main() {
@@ -58,7 +59,7 @@ func main() {
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 3600 && lastUsed != 0 {
-			return c.Send(fmt.Sprintf("*%s*, сначала нагуляй аппет'yeat!!!\nГолоден? ---> /zraza", userName), tele.ModeMarkdown)
+			return c.Send(fmt.Sprintf("⏰ *%s*, сначала нагуляй аппет'yeat!!!\n🍽 /zraza", userName), tele.ModeMarkdown)
 		}
 
 		if rand.Intn(10) == 0 {
@@ -74,8 +75,8 @@ func main() {
 		updateLastUsed(userID, now)
 
 		message := fmt.Sprintf(
-			"*%s* только что сожрал %s и %d зраз!!!\nА всего он уничтожил %d зраз!\n\nГолоден? ---> /zraza",
-			userName, garnish, eaten, total,
+			"🍽 *%s* только что сожрал %d зраз и %s!!!\n📊 А всего он уничтожил %d зраз!\n\n🍽 Голоден? /zraza",
+			userName, eaten, garnish, total,
 		)
 
 		return c.Send(message, tele.ModeMarkdown)
