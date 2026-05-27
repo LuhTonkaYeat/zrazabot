@@ -64,7 +64,10 @@ func main() {
 
 		if rand.Intn(10) == 0 {
 			phrase := fmt.Sprintf(rarePhrases[0], userName)
+			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
+			shitTotal := getShitTotal(userID)
+			phrase += fmt.Sprintf("\n\n💩 _Всего говна навернуто: %d_", shitTotal)
 			return c.Send(phrase, tele.ModeMarkdown)
 		}
 
@@ -93,6 +96,14 @@ func main() {
 			message += fmt.Sprintf("%d. _%s_ - _%d зраз_\n", i+1, u.name, u.total)
 		}
 
+		shitLeaders := getShitLeaderboard(3)
+		if len(shitLeaders) > 0 {
+			message += "\n_💩 Антигерои дня (говноеды):_\n"
+			for i, s := range shitLeaders {
+				message += fmt.Sprintf("%d. _%s_ - _%d раз(а)_\n", i+1, s.name, s.total)
+			}
+		}
+
 		return c.Send(message, tele.ModeMarkdown)
 	})
 
@@ -118,7 +129,8 @@ func initDB() {
 			user_id INTEGER PRIMARY KEY,
 			user_name TEXT DEFAULT '',
 			total INTEGER DEFAULT 0,
-			last_used INTEGER DEFAULT 0
+			last_used INTEGER DEFAULT 0,
+			shit_total INTEGER DEFAULT 0
 		)
 	`)
 	if err != nil {
@@ -146,6 +158,26 @@ func addZrazy(userID int64, userName string, amount int) {
 	}
 }
 
+func addShit(userID int64, userName string, amount int) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+		INSERT INTO users (user_id, user_name, shit_total) VALUES (?, ?, ?)
+		ON CONFLICT(user_id) DO UPDATE SET 
+			shit_total = shit_total + ?,
+			user_name = EXCLUDED.user_name
+	`, userID, userName, amount, amount)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
 func getTotal(userID int64) int {
 	dbPath := getDBPath()
 	db, err := sql.Open("sqlite", dbPath)
@@ -165,6 +197,27 @@ func getTotal(userID int64) int {
 		return 0
 	}
 	return total
+}
+
+func getShitTotal(userID int64) int {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return 0
+	}
+	defer db.Close()
+
+	var shitTotal int
+	err = db.QueryRow("SELECT shit_total FROM users WHERE user_id = ?", userID).Scan(&shitTotal)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0
+		}
+		log.Println("DB error:", err)
+		return 0
+	}
+	return shitTotal
 }
 
 func getLastUsed(userID int64) int64 {
@@ -219,6 +272,40 @@ func getLeaderboard(limit int) []userStats {
 		SELECT user_name, total FROM users 
 		WHERE total > 0 
 		ORDER BY total DESC 
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var users []userStats
+	for rows.Next() {
+		var u userStats
+		if err := rows.Scan(&u.name, &u.total); err != nil {
+			log.Println("DB error:", err)
+			continue
+		}
+		users = append(users, u)
+	}
+
+	return users
+}
+
+func getShitLeaderboard(limit int) []userStats {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT user_name, shit_total FROM users 
+		WHERE shit_total > 0 
+		ORDER BY shit_total DESC 
 		LIMIT ?
 	`, limit)
 	if err != nil {
