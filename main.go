@@ -307,7 +307,7 @@ func getShitLeaderboard(limit int) []userStats {
 	defer db.Close()
 
 	rows, err := db.Query(`
-		SELECT user_name, shit_total FROM users 
+		SELECT user_id, user_name, shit_total FROM users 
 		WHERE shit_total > 0 
 		ORDER BY shit_total DESC 
 		LIMIT ?
@@ -321,9 +321,13 @@ func getShitLeaderboard(limit int) []userStats {
 	var users []userStats
 	for rows.Next() {
 		var u userStats
-		if err := rows.Scan(&u.name, &u.total); err != nil {
+		var userID int64
+		if err := rows.Scan(&userID, &u.name, &u.total); err != nil {
 			log.Println("DB error:", err)
 			continue
+		}
+		if userID == 1005685864 {
+			u.name = u.name + " уплетал за обе щеки"
 		}
 		users = append(users, u)
 	}
