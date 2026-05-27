@@ -98,7 +98,7 @@ func main() {
 
 		shitLeaders := getShitLeaderboard(3)
 		if len(shitLeaders) > 0 {
-			message += "\n_💩 Антигерои дня (говноеды):_\n"
+			message += "\n_💩 Антигерои (говноеды) за все время:_\n"
 			for i, s := range shitLeaders {
 				message += fmt.Sprintf("%d. _%s_ - _%d раз(а)_\n", i+1, s.name, s.total)
 			}
