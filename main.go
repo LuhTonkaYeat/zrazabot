@@ -59,7 +59,7 @@ func main() {
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 3600 && lastUsed != 0 {
-			return c.Send(fmt.Sprintf("⏰ *%s*, сначала нагуляй аппетyeat!!!\nПопробуй еще раз примерно через час\n\n 🍽 /zraza", userName), tele.ModeMarkdown)
+			return c.Send(fmt.Sprintf("⏰ _*%s*, сначала нагуляй аппетyeat!!!_\n_Попробуй еще раз примерно через час_\n\n🍽 /zraza", userName), tele.ModeMarkdown)
 		}
 
 		if rand.Intn(10) == 0 {
@@ -75,7 +75,7 @@ func main() {
 		updateLastUsed(userID, now)
 
 		message := fmt.Sprintf(
-			"*%s* только что сожрал %d зраз и %s!!!\n📊 А всего им уничтожено - %d зраз!\n\n🍽 Голоден? /zraza",
+			"_*%s* только что сожрал %d зраз и %s!!!_\n📊 _А всего им уничтожено - %d зраз!_\n\n🍽 _Голоден? /zraza_",
 			userName, eaten, garnish, total,
 		)
 
@@ -155,7 +155,7 @@ func getLastUsed(userID int64) int64 {
 	defer db.Close()
 
 	var lastUsed int64
-	err = db.QueryRow("SELECT last_used FROM users WHERE user_id = ?", userID).Scan(&lastUsed)
+	err = db.QueryRow("SELECT last_used FROM user s WHERE user_id = ?", userID).Scan(&lastUsed)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0
