@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -70,7 +71,7 @@ func main() {
 
 		eaten := rand.Intn(10) + 1
 		garnish := garnishes[rand.Intn(len(garnishes))]
-		addZrazy(userID, eaten)
+		addZrazy(userID, userName, eaten)
 		total := getTotal(userID)
 		updateLastUsed(userID, now)
 
@@ -82,8 +83,27 @@ func main() {
 		return c.Send(message, tele.ModeMarkdown)
 	})
 
+	b.Handle("/stat", func(c tele.Context) error {
+		users := getLeaderboard(5)
+		if len(users) == 0 {
+			return c.Send("_Пока никто не ел зразы... Напиши /zraza_", tele.ModeMarkdown)
+		}
+
+		message := "_🏆 Легенды столешницы СОШ №1 по финансовым махинациям со зразами:_\n\n"
+		for i, u := range users {
+			message += fmt.Sprintf("%d. _%s_ - _%d зраз_\n", i+1, u.name, u.total)
+		}
+
+		return c.Send(message, tele.ModeMarkdown)
+	})
+
 	log.Println("Бот запущен! Напиши /zraza в Telegram")
 	b.Start()
+}
+
+type userStats struct {
+	name  string
+	total int
 }
 
 func initDB() {
@@ -97,6 +117,7 @@ func initDB() {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			user_id INTEGER PRIMARY KEY,
+			user_name TEXT DEFAULT '',
 			total INTEGER DEFAULT 0,
 			last_used INTEGER DEFAULT 0
 		)
@@ -106,7 +127,7 @@ func initDB() {
 	}
 }
 
-func addZrazy(userID int64, amount int) {
+func addZrazy(userID int64, userName string, amount int) {
 	dbPath := getDBPath()
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -116,9 +137,11 @@ func addZrazy(userID int64, amount int) {
 	defer db.Close()
 
 	_, err = db.Exec(`
-		INSERT INTO users (user_id, total) VALUES (?, ?)
-		ON CONFLICT(user_id) DO UPDATE SET total = total + ?
-	`, userID, amount, amount)
+		INSERT INTO users (user_id, user_name, total) VALUES (?, ?, ?)
+		ON CONFLICT(user_id) DO UPDATE SET 
+			total = total + ?,
+			user_name = CASE WHEN user_name = '' THEN ? ELSE user_name END
+	`, userID, userName, amount, amount, userName)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
@@ -182,4 +205,45 @@ func updateLastUsed(userID int64, timestamp int64) {
 	if err != nil {
 		log.Println("DB error:", err)
 	}
+}
+
+func getLeaderboard(limit int) []userStats {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT user_name, total FROM users 
+		WHERE total > 0 
+		ORDER BY total DESC 
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var users []userStats
+	for rows.Next() {
+		var u userStats
+		if err := rows.Scan(&u.name, &u.total); err != nil {
+			log.Println("DB error:", err)
+			continue
+		}
+		if u.name == "" {
+			u.name = "Неизвестный"
+		}
+		users = append(users, u)
+	}
+
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].total > users[j].total
+	})
+
+	return users
 }
