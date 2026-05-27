@@ -129,12 +129,16 @@ func initDB() {
 			user_id INTEGER PRIMARY KEY,
 			user_name TEXT DEFAULT '',
 			total INTEGER DEFAULT 0,
-			last_used INTEGER DEFAULT 0,
-			shit_total INTEGER DEFAULT 0
+			last_used INTEGER DEFAULT 0
 		)
 	`)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	_, err = db.Exec(`ALTER TABLE users ADD COLUMN shit_total INTEGER DEFAULT 0`)
+	if err != nil {
+		log.Println("Column shit_total already exists or migration skipped:", err)
 	}
 }
 
