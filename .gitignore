@@ -1,5 +1,17 @@
-.venv/
-__pycache__/
-*.pyc
+# Go бинарник
+zrazabot
+zrazabot.exe
+
+# База данных
 zrazy.db
+
+# Переменные окружения
 .env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Go модули
+go.sum
