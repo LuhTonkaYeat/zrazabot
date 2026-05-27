@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -21,6 +22,13 @@ var garnishes = []string{
 
 var rarePhrases = []string{
 	"%s сожрал говнеца! сегодня без зраз!\n---> /zraza",
+}
+
+func getDBPath() string {
+	if dataDir := os.Getenv("DATA_DIR"); dataDir != "" {
+		return filepath.Join(dataDir, "zrazy.db")
+	}
+	return "zrazy.db"
 }
 
 func main() {
@@ -50,7 +58,7 @@ func main() {
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 3600 && lastUsed != 0 {
-			return c.Send(fmt.Sprintf("*%s*, сначала нагуляй аппет'yeat!!!\n---> /zraza", userName), tele.ModeMarkdown)
+			return c.Send(fmt.Sprintf("*%s*, сначала нагуляй аппетyeat!!!\n---> /zraza", userName), tele.ModeMarkdown)
 		}
 
 		if rand.Intn(10) == 0 {
@@ -78,7 +86,8 @@ func main() {
 }
 
 func initDB() {
-	db, err := sql.Open("sqlite", "zrazy.db")
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,7 +106,8 @@ func initDB() {
 }
 
 func addZrazy(userID int64, amount int) {
-	db, err := sql.Open("sqlite", "zrazy.db")
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Println("DB error:", err)
 		return
@@ -114,7 +124,8 @@ func addZrazy(userID int64, amount int) {
 }
 
 func getTotal(userID int64) int {
-	db, err := sql.Open("sqlite", "zrazy.db")
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Println("DB error:", err)
 		return 0
@@ -134,7 +145,8 @@ func getTotal(userID int64) int {
 }
 
 func getLastUsed(userID int64) int64 {
-	db, err := sql.Open("sqlite", "zrazy.db")
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Println("DB error:", err)
 		return 0
@@ -154,7 +166,8 @@ func getLastUsed(userID int64) int64 {
 }
 
 func updateLastUsed(userID int64, timestamp int64) {
-	db, err := sql.Open("sqlite", "zrazy.db")
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Println("DB error:", err)
 		return
