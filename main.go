@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"sort"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -83,7 +82,7 @@ func main() {
 		return c.Send(message, tele.ModeMarkdown)
 	})
 
-	b.Handle("/stat", func(c tele.Context) error {
+	b.Handle("/zrazastat", func(c tele.Context) error {
 		users := getLeaderboard(5)
 		if len(users) == 0 {
 			return c.Send("_Пока никто не ел зразы... Напиши /zraza_", tele.ModeMarkdown)
@@ -140,8 +139,8 @@ func addZrazy(userID int64, userName string, amount int) {
 		INSERT INTO users (user_id, user_name, total) VALUES (?, ?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET 
 			total = total + ?,
-			user_name = CASE WHEN user_name = '' THEN ? ELSE user_name END
-	`, userID, userName, amount, amount, userName)
+			user_name = EXCLUDED.user_name
+	`, userID, userName, amount, amount)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
@@ -200,8 +199,8 @@ func updateLastUsed(userID int64, timestamp int64) {
 
 	_, err = db.Exec(`
 		INSERT INTO users (user_id, last_used) VALUES (?, ?)
-		ON CONFLICT(user_id) DO UPDATE SET last_used = ?
-	`, userID, timestamp, timestamp)
+		ON CONFLICT(user_id) DO UPDATE SET last_used = EXCLUDED.last_used
+	`, userID, timestamp)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
@@ -235,15 +234,8 @@ func getLeaderboard(limit int) []userStats {
 			log.Println("DB error:", err)
 			continue
 		}
-		if u.name == "" {
-			u.name = "Неизвестный"
-		}
 		users = append(users, u)
 	}
-
-	sort.Slice(users, func(i, j int) bool {
-		return users[i].total > users[j].total
-	})
 
 	return users
 }
