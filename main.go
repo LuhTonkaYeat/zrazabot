@@ -24,6 +24,13 @@ var rarePhrases = []string{
 	"💩 _%s только что навернул говнеца! сегодня без зраз!_\n🍽 Голоден? /zraza",
 }
 
+var customSuffixes = map[int64]string{
+	1137760134: " (уплетал за обе щеки и тяжку сделал)",
+	1005685864: " (и ягером запил все нах)",
+	2035294142: " (и балтосом 1 запил все нax)",
+	1966955912: " (по трезвяку спокойно наслаждался...)",
+}
+
 func getDBPath() string {
 	dataDir := "/app/data"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
@@ -77,9 +84,18 @@ func main() {
 		total := getTotal(userID)
 		updateLastUsed(userID, now)
 
+		var zrazaWord string
+		if total%10 == 1 && total%100 != 11 {
+			zrazaWord = "зраза"
+		} else if (total%10 >= 2 && total%10 <= 4) && (total%100 < 10 || total%100 >= 20) {
+			zrazaWord = "зразы"
+		} else {
+			zrazaWord = "зраз"
+		}
+
 		message := fmt.Sprintf(
-			"_%s только что сожрал %d зраз и %s!!!_\n📊 _А всего им уничтожено - %d зраз!_\n\n🍽 _Голоден? /zraza_",
-			userName, eaten, garnish, total,
+			"_%s только что сожрал %d зраз и %s!!!_\n📊 _А всего им уничтожено - %d %s!_\n\n🍽 _Голоден? /zraza_",
+			userName, eaten, garnish, total, zrazaWord,
 		)
 
 		return c.Send(message, tele.ModeMarkdown)
@@ -93,12 +109,12 @@ func main() {
 
 		message := "_🏆 Легенды столешницы СОШ №1 по финансовым махинациям со зразами:_\n\n"
 		for i, u := range users {
-			message += fmt.Sprintf("%d. _%s_ - _%d зраз_\n", i+1, u.name, u.total)
+			message += fmt.Sprintf("%d. _%s_ - _%d_\n", i+1, u.name, u.total)
 		}
 
 		shitLeaders := getShitLeaderboard(3)
 		if len(shitLeaders) > 0 {
-			message += "\n_💩 Антигерои (говноеды) за все время:_\n"
+			message += "\n_💩 Антигерои (говноеды) за всё время:_\n"
 			for i, s := range shitLeaders {
 				message += fmt.Sprintf("%d. _%s_ - _%d раз(а)_\n", i+1, s.name, s.total)
 			}
@@ -326,8 +342,8 @@ func getShitLeaderboard(limit int) []userStats {
 			log.Println("DB error:", err)
 			continue
 		}
-		if userID == 1005685864 {
-			u.name = u.name + " уплетал за обе щеки"
+		if suffix, ok := customSuffixes[userID]; ok {
+			u.name = u.name + suffix
 		}
 		users = append(users, u)
 	}
