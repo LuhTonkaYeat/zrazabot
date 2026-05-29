@@ -57,6 +57,22 @@ func formatZrazyCount(count int) string {
 	return "зраз"
 }
 
+func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
+	msg := c.Message()
+	chat := msg.Chat
+	topicID := msg.ThreadID
+
+	opt := &tele.SendOptions{
+		ParseMode:           tele.ModeMarkdown,
+		ReplyTo:             msg,
+		ThreadID:            topicID,
+		DisableWebPagePreview: true,
+	}
+
+	_, err := b.Send(chat, text, opt)
+	return err
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -86,7 +102,7 @@ func main() {
 		if now-lastUsed < 3600 && lastUsed != 0 {
 			secondsLeft := 3600 - (now - lastUsed)
 			timeLeft := formatCooldown(secondsLeft)
-			return c.Send(fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽 /zraza", userName, timeLeft), tele.ModeMarkdown)
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽 /zraza", userName, timeLeft))
 		}
 
 		rarity := rand.Intn(100)
@@ -100,7 +116,7 @@ func main() {
 				"_✨✨✨ ЧУДО! ЧЗХХХ!!! ✨✨✨_\n_%s нашел заначку и сожрал 67 зраз с %s!!!_\n📊 _А всего им уничтожено - %d %s!_\n\n🍽 _Голоден? /zraza_",
 				userName, garnish, total, formatZrazyCount(total),
 			)
-			return c.Send(message, tele.ModeMarkdown)
+			return sendToTopic(b, c, message)
 		}
 
 		if rarity < 10 {
@@ -110,7 +126,7 @@ func main() {
 			shitTotal := getShitTotal(userID)
 			phrase := fmt.Sprintf("💩 _%s навернул говнеца и обнулил свой счётчик зраз!_\n🍽 Голоден? /zraza", userName)
 			phrase += fmt.Sprintf("\n\n💩 _Всего говна навернуто: %d_", shitTotal)
-			return c.Send(phrase, tele.ModeMarkdown)
+			return sendToTopic(b, c, phrase)
 		}
 
 		eaten := rand.Intn(10) + 1
@@ -124,13 +140,13 @@ func main() {
 			userName, eaten, garnish, total, formatZrazyCount(total),
 		)
 
-		return c.Send(message, tele.ModeMarkdown)
+		return sendToTopic(b, c, message)
 	})
 
 	b.Handle("/zrazastat", func(c tele.Context) error {
 		users := getLeaderboard(5)
 		if len(users) == 0 {
-			return c.Send("_Пока никто не ел зразы... Напиши /zraza_", tele.ModeMarkdown)
+			return sendToTopic(b, c, "_Пока никто не ел зразы... Напиши /zraza_")
 		}
 
 		message := "_🏆 Легенды столешницы СОШ №1 по финансовым махинациям со зразами:_\n\n"
@@ -146,7 +162,7 @@ func main() {
 			}
 		}
 
-		return c.Send(message, tele.ModeMarkdown)
+		return sendToTopic(b, c, message)
 	})
 
 	log.Println("Бот запущен! Напиши /zraza в Telegram")
