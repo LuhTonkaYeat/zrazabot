@@ -20,10 +20,6 @@ var garnishes = []string{
 	"🌾 гречку с подливкой",
 }
 
-var rarePhrases = []string{
-	"💩 _%s только что навернул говнеца! сегодня без зраз!_\n🍽 Голоден? /zraza",
-}
-
 var customSuffixes = map[int64]string{
 	1137760134: " (уплетал за обе щеки и тяжку сделал)",
 	1005685864: " (ягером запил все нах)",
@@ -50,6 +46,15 @@ func formatCooldown(secondsLeft int64) string {
 		return fmt.Sprintf("%dмин %dс", minutes, secs)
 	}
 	return fmt.Sprintf("%dс", secs)
+}
+
+func formatZrazyCount(count int) string {
+	if count%10 == 1 && count%100 != 11 {
+		return "зраза"
+	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
+		return "зразы"
+	}
+	return "зраз"
 }
 
 func main() {
@@ -84,11 +89,26 @@ func main() {
 			return c.Send(fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽 /zraza", userName, timeLeft), tele.ModeMarkdown)
 		}
 
-		if rand.Intn(10) == 0 {
-			phrase := fmt.Sprintf(rarePhrases[0], userName)
+		rarity := rand.Intn(100)
+
+		if rarity < 3 {
+			addZrazy(userID, userName, 67)
+			total := getTotal(userID)
+			updateLastUsed(userID, now)
+			garnish := garnishes[rand.Intn(len(garnishes))]
+			message := fmt.Sprintf(
+				"_✨✨✨ ЧУДО! ЧЗХХХ!!! ✨✨✨_\n_%s нашел заначку и сожрал 67 зраз с %s!!!_\n📊 _А всего им уничтожено - %d %s!_\n\n🍽 _Голоден? /zraza_",
+				userName, garnish, total, formatZrazyCount(total),
+			)
+			return c.Send(message, tele.ModeMarkdown)
+		}
+
+		if rarity < 10 {
+			resetZrazy(userID)
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
 			shitTotal := getShitTotal(userID)
+			phrase := fmt.Sprintf("💩 _%s навернул говнеца и обнулил свой счётчик зраз!_\n🍽 Голоден? /zraza", userName)
 			phrase += fmt.Sprintf("\n\n💩 _Всего говна навернуто: %d_", shitTotal)
 			return c.Send(phrase, tele.ModeMarkdown)
 		}
@@ -99,18 +119,9 @@ func main() {
 		total := getTotal(userID)
 		updateLastUsed(userID, now)
 
-		var zrazaWord string
-		if total%10 == 1 && total%100 != 11 {
-			zrazaWord = "зраза"
-		} else if (total%10 >= 2 && total%10 <= 4) && (total%100 < 10 || total%100 >= 20) {
-			zrazaWord = "зразы"
-		} else {
-			zrazaWord = "зраз"
-		}
-
 		message := fmt.Sprintf(
 			"_%s только что сожрал %d зраз и %s!!!_\n📊 _А всего им уничтожено - %d %s!_\n\n🍽 _Голоден? /zraza_",
-			userName, eaten, garnish, total, zrazaWord,
+			userName, eaten, garnish, total, formatZrazyCount(total),
 		)
 
 		return c.Send(message, tele.ModeMarkdown)
@@ -124,14 +135,14 @@ func main() {
 
 		message := "_🏆 Легенды столешницы СОШ №1 по финансовым махинациям со зразами:_\n\n"
 		for i, u := range users {
-			message += fmt.Sprintf("%d. _%s_ - _%d_\n", i+1, u.name, u.total)
+			message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, u.name, u.total, formatZrazyCount(u.total))
 		}
 
-		shitLeaders := getShitLeaderboard(3)
+		shitLeaders := getShitLeaderboard(5)
 		if len(shitLeaders) > 0 {
 			message += "\n_💩 Топ говноедов за всё время:_\n"
 			for i, s := range shitLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d раз(а) полакомился калом 🤤_\n", i+1, s.name, s.total)
+				message += fmt.Sprintf("%d. _%s_ - _%d раз(а)_%s\n", i+1, s.name, s.total, s.suffix)
 			}
 		}
 
@@ -143,8 +154,9 @@ func main() {
 }
 
 type userStats struct {
-	name  string
-	total int
+	name   string
+	total  int
+	suffix string
 }
 
 func initDB() {
@@ -188,6 +200,23 @@ func addZrazy(userID int64, userName string, amount int) {
 			total = total + ?,
 			user_name = EXCLUDED.user_name
 	`, userID, userName, amount, amount)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func resetZrazy(userID int64) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+		UPDATE users SET total = 0 WHERE user_id = ?
+	`, userID)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
@@ -358,7 +387,7 @@ func getShitLeaderboard(limit int) []userStats {
 			continue
 		}
 		if suffix, ok := customSuffixes[userID]; ok {
-			u.name = u.name + suffix
+			u.suffix = suffix
 		}
 		users = append(users, u)
 	}
