@@ -39,6 +39,19 @@ func getDBPath() string {
 	return filepath.Join(dataDir, "zrazy.db")
 }
 
+func formatCooldown(secondsLeft int64) string {
+	hours := secondsLeft / 3600
+	minutes := (secondsLeft % 3600) / 60
+	secs := secondsLeft % 60
+
+	if hours > 0 {
+		return fmt.Sprintf("%dч %dмин %dс", hours, minutes, secs)
+	} else if minutes > 0 {
+		return fmt.Sprintf("%dмин %dс", minutes, secs)
+	}
+	return fmt.Sprintf("%dс", secs)
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -66,7 +79,9 @@ func main() {
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 3600 && lastUsed != 0 {
-			return c.Send(fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Попробуй еще раз примерно через час_\n\n🍽 /zraza", userName), tele.ModeMarkdown)
+			secondsLeft := 3600 - (now - lastUsed)
+			timeLeft := formatCooldown(secondsLeft)
+			return c.Send(fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽 /zraza", userName, timeLeft), tele.ModeMarkdown)
 		}
 
 		if rand.Intn(10) == 0 {
