@@ -167,7 +167,7 @@ func main() {
 
 	b.Handle("/kisel", func(c tele.Context) error {
 		userName := c.Sender().FirstName
-		message := fmt.Sprintf("_%s сказал, что КИСЕЛЬ", userName)
+		message := fmt.Sprintf("*%s* _сказал, что КИСЕЛЬ ДАУН_", userName)
 		return sendToTopic(b, c, message)
 	})
 
