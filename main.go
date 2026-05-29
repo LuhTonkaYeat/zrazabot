@@ -63,9 +63,9 @@ func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
 	topicID := msg.ThreadID
 
 	opt := &tele.SendOptions{
-		ParseMode:           tele.ModeMarkdown,
-		ReplyTo:             msg,
-		ThreadID:            topicID,
+		ParseMode:             tele.ModeMarkdown,
+		ReplyTo:               msg,
+		ThreadID:              topicID,
 		DisableWebPagePreview: true,
 	}
 
@@ -162,6 +162,12 @@ func main() {
 			}
 		}
 
+		return sendToTopic(b, c, message)
+	})
+
+	b.Handle("/kisel", func(c tele.Context) error {
+		userName := c.Sender().FirstName
+		message := fmt.Sprintf("_%s сказал, что КИСЕЛЬ ДАУН", userName)
 		return sendToTopic(b, c, message)
 	})
 
