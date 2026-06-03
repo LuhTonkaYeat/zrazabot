@@ -21,13 +21,6 @@ var garnishes = []string{
 	"🌾 гречку с подливкой",
 }
 
-var customSuffixes = map[int64]string{
-	1137760134: " (уплетал за обе щеки и тяжку сделал)",
-	1005685864: " (ягером запил все нах)",
-	2035294142: " (балтосом 1 запил все нax)",
-	1966955912: " (по трезвяку спокойно наслаждался...)",
-}
-
 func getDBPath() string {
 	dataDir := "/app/data"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
@@ -63,6 +56,15 @@ func formatEatenZrazy(count int) string {
 		return "зразу"
 	}
 	return "зраз"
+}
+
+func formatLuckyCount(count int) string {
+	if count%10 == 1 && count%100 != 11 {
+		return "раз"
+	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
+		return "раза"
+	}
+	return "раз"
 }
 
 func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
@@ -117,11 +119,12 @@ func main() {
 
 		if rarity < 5 {
 			addZrazy(userID, userName, 67)
+			incrementLuckyCount(userID)
 			total := getTotal(userID)
 			updateLastUsed(userID, now)
 			garnish := garnishes[rand.Intn(len(garnishes))]
 			message := fmt.Sprintf(
-				"_✨✨✨ ЧУДО! ЧЗХХХ!!! ✨✨✨_\n_%s нашел заначку и сожрал 67 зраз с %s!!!_\n📊 _А всего им уничтожено - %d %s!_\n\n🍽 _Голоден? /zraza_",
+				"_✨✨✨ ЧУДО! ЧЗХХХ!!! ✨✨✨_\n_%s нашел заначку и сожрал 67 зраз с %s!!!_\n📊 _А всего он схавал - %d %s!_\n\n🍽 _Голоден? /zraza_",
 				userName, garnish, total, formatZrazyCount(total),
 			)
 			return sendToTopic(b, c, message)
@@ -132,7 +135,7 @@ func main() {
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
 			shitTotal := getShitTotal(userID)
-			phrase := fmt.Sprintf("💩 _%s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n🍽 Голоден? /zraza", userName)
+			phrase := fmt.Sprintf("💩 ХЕХЕХЕХЕ _%s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n🍽 Голоден? /zraza", userName)
 			phrase += fmt.Sprintf("\n\n💩 _Всего тарелок говна им навернуто: %d_", shitTotal)
 			return sendToTopic(b, c, phrase)
 		}
@@ -144,30 +147,67 @@ func main() {
 		updateLastUsed(userID, now)
 
 		message := fmt.Sprintf(
-			"_%s только что сожрал %d %s и %s!!!_\n📊 _А всего им уничтожено - %d %s!_\n\n🍽 _Голоден? /zraza_",
+			"_%s ток что сожрал %d %s и %s!!!_\n📊 _А всего он схавал - %d %s!_\n\n🍽 _Голоден? /zraza_",
 			userName, eaten, formatEatenZrazy(eaten), garnish, total, formatZrazyCount(total),
 		)
 
 		return sendToTopic(b, c, message)
 	})
 
-	b.Handle("/zrazastat", func(c tele.Context) error {
+	b.Handle("/stat", func(c tele.Context) error {
 		users := getLeaderboard(5)
 		if len(users) == 0 {
 			return sendToTopic(b, c, "_Пока никто не ел зразы... Напиши /zraza_")
 		}
 
-		message := "_🏆 Легенды столешницы СОШ №1 по финансовым махинациям со зразами:_\n\n"
+		message := "_🥣 Актуальный еврейтинг СОШ №1 по поеданию зраз:_\n\n"
 		for i, u := range users {
 			message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, u.name, u.total, formatZrazyCount(u.total))
 		}
 
+		return sendToTopic(b, c, message)
+	})
+
+	b.Handle("/top", func(c tele.Context) error {
+		message := "_📊 Наша стата:_\n\n"
+
 		shitLeaders := getShitLeaderboard(5)
 		if len(shitLeaders) > 0 {
-			message += "\n_💩 Топ говноедов за всё время:_\n"
+			message += "_💩 Топ говноедов:_\n"
 			for i, s := range shitLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d раз(а) схавал целую тарелку говна_%s\n", i+1, s.name, s.total, s.suffix)
+				message += fmt.Sprintf("%d. _%s_ - _%d раз(а) захавал говна_\n", i+1, s.name, s.total)
 			}
+			message += "\n"
+		}
+
+		luckyLeaders := getLuckyLeaderboard(5)
+		if len(luckyLeaders) > 0 {
+			message += "_✨ Топ лакеров (3% шанс на 67 зраз ващет):_\n"
+			for i, l := range luckyLeaders {
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, l.name, l.count, formatLuckyCount(l.count))
+			}
+			message += "\n"
+		}
+
+		stealLeaders := getStealLeaderboard(5)
+		if len(stealLeaders) > 0 {
+			message += "_🦝 Топ воров (успешные кражи):_\n"
+			for i, st := range stealLeaders {
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, st.name, st.count, formatLuckyCount(st.count))
+			}
+			message += "\n"
+		}
+
+		giveLeaders := getGiveLeaderboard(5)
+		if len(giveLeaders) > 0 {
+			message += "_🎁 Топ донатеров (подаренные зразы):_\n"
+			for i, g := range giveLeaders {
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, g.name, g.total, formatZrazyCount(g.total))
+			}
+		}
+
+		if len(message) == len("_📊 Дополнительная статистика:_\n\n") {
+			message += "_Пока стата пустая..._"
 		}
 
 		return sendToTopic(b, c, message)
@@ -194,7 +234,7 @@ func main() {
 		}
 
 		if targetUserID == userID {
-			return sendToTopic(b, c, "_Слышь, умник, я щас мамке твоей пожалуюсь, что ты у ся воровать пытаешься, усёк? 😉_")
+			return sendToTopic(b, c, "_Слышь, умник, я щас мамке твоей пожалуюсь, что ты абузить пытаешься, усёк? 😉_")
 		}
 
 		stealCooldown := getStealCooldown(userID)
@@ -202,7 +242,7 @@ func main() {
 		if now-stealCooldown < 3600*5 && stealCooldown != 0 {
 			secondsLeft := 3600*5 - (now - stealCooldown)
 			timeLeft := formatCooldown(secondsLeft)
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _Остынь, %s, додепа не будет!_\n_Попробуй тырнуть через: %s_\n\n🍽А лучше сам похавай /zraza", userName, timeLeft))
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _Остынь, %s, додепа не будет!_\n_Попробуй тырнуть через: %s_\n\n🍽 А лучше сам похавай /zraza", userName, timeLeft))
 		}
 
 		total := getTotal(userID)
@@ -228,6 +268,7 @@ func main() {
 		if success {
 			addZrazy(userID, targetName, stealAmount)
 			addZrazy(targetUserID, targetName, -stealAmount)
+			incrementStealSuccess(userID)
 			updateStealCooldown(userID, now)
 			message := fmt.Sprintf(
 				"🦝 *%s* тихонечко тырнул %d %s у *%s*!\n📊 Теперь у *%s* на счету - %d %s, у *%s* - %d %s",
@@ -239,10 +280,11 @@ func main() {
 		} else {
 			addZrazy(userID, userName, -stealAmount)
 			addZrazy(targetUserID, targetName, stealAmount)
+			incrementStealFail(userID)
 			updateStealCooldown(userID, now)
 
 			message := fmt.Sprintf(
-				"💥 АХАХААХ, *%s* попытался украсть %d %s у *%s*, но ставка не зашла (ЛОШАРА) и он лузнул свои %d %s!\n📊 Терь у *%s* на балике - %d %s, у *%s* - %d %s",
+				"💥 АХАХАХАХ, *%s* попытался украсть %d %s у *%s*, но ставка не зашла (ЛОШАРА) и он лузнул свои %d %s!\n📊 Терь у *%s* на балике - %d %s, у *%s* - %d %s",
 				userName, stealAmount, formatZrazyCount(stealAmount), targetName,
 				stealAmount, formatZrazyCount(stealAmount),
 				userName, getTotal(userID), formatZrazyCount(getTotal(userID)),
@@ -258,12 +300,12 @@ func main() {
 		args := c.Args()
 
 		if len(args) < 2 {
-			return sendToTopic(b, c, "🎁 *Как юзать:* `/give @username [количество]` или ответом на соо получателя\n\nПример: `/give @derden993 5`")
+			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ* 🎁\n\n🎭 *Меценатство - как юзать:*\n`/give @username [количество]` или ответом на соо получателя\n\nПример: `/give @derden993 5`")
 		}
 
 		amount, err := parseAmount(args[len(args)-1])
 		if err != nil {
-			return sendToTopic(b, c, "❌ *Ошибка отправки:* Укажите целое положительное число зраз для подарка.")
+			return sendToTopic(b, c, "❌ *Ошибка отправки:* Надо целое положительное число зраз для подарка")
 		}
 
 		targetUserID, targetName, err := getUserFromMessage(c, args[0])
@@ -282,6 +324,7 @@ func main() {
 
 		addZrazy(userID, userName, -amount)
 		addZrazy(targetUserID, targetName, amount)
+		incrementGive(userID, amount)
 
 		message := fmt.Sprintf(
 			"🎁 юхууу, *%s* подарил %d %s пользователю *%s*!\n📊 Теперь у *%s* на балике - %d %s, а у *%s* - %d %s",
@@ -297,9 +340,18 @@ func main() {
 }
 
 type userStats struct {
-	name   string
-	total  int
-	suffix string
+	name  string
+	total int
+}
+
+type userCountStats struct {
+	name  string
+	count int
+}
+
+type userGiveStats struct {
+	name  string
+	total int
 }
 
 func getUserFromMessage(c tele.Context, mention string) (int64, string, error) {
@@ -356,7 +408,6 @@ func initDB() {
 			lucky_count INTEGER DEFAULT 0,
 			steal_success INTEGER DEFAULT 0,
 			steal_fail INTEGER DEFAULT 0,
-			give_count INTEGER DEFAULT 0,
 			give_total INTEGER DEFAULT 0
 		)
 	`)
@@ -421,6 +472,78 @@ func addShit(userID int64, userName string, amount int) {
 			shit_total = shit_total + ?,
 			user_name = EXCLUDED.user_name
 	`, userID, userName, amount, amount)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func incrementLuckyCount(userID int64) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+		INSERT INTO users (user_id, lucky_count) VALUES (?, 1)
+		ON CONFLICT(user_id) DO UPDATE SET lucky_count = lucky_count + 1
+	`, userID)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func incrementStealSuccess(userID int64) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+		INSERT INTO users (user_id, steal_success) VALUES (?, 1)
+		ON CONFLICT(user_id) DO UPDATE SET steal_success = steal_success + 1
+	`, userID)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func incrementStealFail(userID int64) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+		INSERT INTO users (user_id, steal_fail) VALUES (?, 1)
+		ON CONFLICT(user_id) DO UPDATE SET steal_fail = steal_fail + 1
+	`, userID)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func incrementGive(userID int64, amount int) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+		INSERT INTO users (user_id, give_total) VALUES (?, ?)
+		ON CONFLICT(user_id) DO UPDATE SET give_total = give_total + ?
+	`, userID, amount, amount)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
@@ -590,7 +713,7 @@ func getShitLeaderboard(limit int) []userStats {
 	defer db.Close()
 
 	rows, err := db.Query(`
-		SELECT user_id, user_name, shit_total FROM users 
+		SELECT user_name, shit_total FROM users 
 		WHERE shit_total > 0 
 		ORDER BY shit_total DESC 
 		LIMIT ?
@@ -604,13 +727,111 @@ func getShitLeaderboard(limit int) []userStats {
 	var users []userStats
 	for rows.Next() {
 		var u userStats
-		var userID int64
-		if err := rows.Scan(&userID, &u.name, &u.total); err != nil {
+		if err := rows.Scan(&u.name, &u.total); err != nil {
 			log.Println("DB error:", err)
 			continue
 		}
-		if suffix, ok := customSuffixes[userID]; ok {
-			u.suffix = suffix
+		users = append(users, u)
+	}
+
+	return users
+}
+
+func getLuckyLeaderboard(limit int) []userCountStats {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT user_name, lucky_count FROM users 
+		WHERE lucky_count > 0 
+		ORDER BY lucky_count DESC 
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var users []userCountStats
+	for rows.Next() {
+		var u userCountStats
+		if err := rows.Scan(&u.name, &u.count); err != nil {
+			log.Println("DB error:", err)
+			continue
+		}
+		users = append(users, u)
+	}
+
+	return users
+}
+
+func getStealLeaderboard(limit int) []userCountStats {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT user_name, steal_success FROM users 
+		WHERE steal_success > 0 
+		ORDER BY steal_success DESC 
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var users []userCountStats
+	for rows.Next() {
+		var u userCountStats
+		if err := rows.Scan(&u.name, &u.count); err != nil {
+			log.Println("DB error:", err)
+			continue
+		}
+		users = append(users, u)
+	}
+
+	return users
+}
+
+func getGiveLeaderboard(limit int) []userGiveStats {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT user_name, give_total FROM users 
+		WHERE give_total > 0 
+		ORDER BY give_total DESC 
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var users []userGiveStats
+	for rows.Next() {
+		var u userGiveStats
+		if err := rows.Scan(&u.name, &u.total); err != nil {
+			log.Println("DB error:", err)
+			continue
 		}
 		users = append(users, u)
 	}
