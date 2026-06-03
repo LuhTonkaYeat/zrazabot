@@ -67,6 +67,24 @@ func formatLuckyCount(count int) string {
 	return "раз"
 }
 
+func formatShitCount(count int) string {
+	if count%10 == 1 && count%100 != 11 {
+		return "раз"
+	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
+		return "раза"
+	}
+	return "раз"
+}
+
+func formatStealCount(count int) string {
+	if count%10 == 1 && count%100 != 11 {
+		return "раз"
+	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
+		return "раза"
+	}
+	return "раз"
+}
+
 func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
 	msg := c.Message()
 	chat := msg.Chat
@@ -136,7 +154,7 @@ func main() {
 			updateLastUsed(userID, now)
 			shitTotal := getShitTotal(userID)
 			phrase := fmt.Sprintf("💩 ХЕХЕХЕХЕ _%s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n🍽 Голоден? /zraza", userName)
-			phrase += fmt.Sprintf("\n\n💩 _Всего тарелок говна им навернуто: %d_", shitTotal)
+			phrase += fmt.Sprintf("\n\n💩 _Всего тарелок говна им навернуто: %d %s_", shitTotal, formatShitCount(shitTotal))
 			return sendToTopic(b, c, phrase)
 		}
 
@@ -160,7 +178,7 @@ func main() {
 			return sendToTopic(b, c, "_Пока никто не ел зразы... Напиши /zraza_")
 		}
 
-		message := "_🥣 Актуальный еврейтинг СОШ №1 по поеданию зраз:_\n\n"
+		message := "🥣 *Актуальный еврейтинг СОШ №1 по поеданию зраз:*\n\n"
 		for i, u := range users {
 			message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, u.name, u.total, formatZrazyCount(u.total))
 		}
@@ -175,14 +193,14 @@ func main() {
 		if len(shitLeaders) > 0 {
 			message += "_💩 Топ говноедов:_\n"
 			for i, s := range shitLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d раз(а) захавал говна_\n", i+1, s.name, s.total)
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, s.name, s.total, formatShitCount(s.total))
 			}
 			message += "\n"
 		}
 
 		luckyLeaders := getLuckyLeaderboard(5)
 		if len(luckyLeaders) > 0 {
-			message += "_✨ Топ лакеров (3% шанс на 67 зраз ващет):_\n"
+			message += "_✨ Топ лакеров (67 зраз):_\n"
 			for i, l := range luckyLeaders {
 				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, l.name, l.count, formatLuckyCount(l.count))
 			}
@@ -193,7 +211,7 @@ func main() {
 		if len(stealLeaders) > 0 {
 			message += "_🦝 Топ воров (успешные кражи):_\n"
 			for i, st := range stealLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, st.name, st.count, formatLuckyCount(st.count))
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, st.name, st.count, formatStealCount(st.count))
 			}
 			message += "\n"
 		}
@@ -206,7 +224,7 @@ func main() {
 			}
 		}
 
-		if len(message) == len("_📊 Дополнительная статистика:_\n\n") {
+		if len(message) == len("_📊 Наша стата:_\n\n") {
 			message += "_Пока стата пустая..._"
 		}
 
@@ -225,7 +243,7 @@ func main() {
 		args := c.Args()
 
 		if len(args) == 0 {
-			return sendToTopic(b, c, "🎰 *ДА БУДЕТ ГЕМБЛИНГ* 🎰\n\n 🎭 *Кража зраз - как юзать:* \n'/steal @username' или ответом на соо цели 😈")
+			return sendToTopic(b, c, "🎰 *ДА БУДЕТ ГЕМБЛИНГ* 🎰\n\n🎭 *Кража зраз - как юзать:*\n`/steal @username` или ответом на сообщение цели 😈")
 		}
 
 		targetUserID, targetName, err := getUserFromMessage(c, args[0])
@@ -252,7 +270,7 @@ func main() {
 
 		targetTotal := getTotal(targetUserID)
 		if targetTotal < 3 {
-			return sendToTopic(b, c, fmt.Sprintf("😢 _У %s всего %d %s, с него неx взять..._", targetName, targetTotal, formatZrazyCount(targetTotal)))
+			return sendToTopic(b, c, fmt.Sprintf("😢 _У %s всего %d %s, с него нех взять..._", targetName, targetTotal, formatZrazyCount(targetTotal)))
 		}
 
 		stealAmount := rand.Intn(5) + 1
@@ -300,7 +318,7 @@ func main() {
 		args := c.Args()
 
 		if len(args) < 2 {
-			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ* 🎁\n\n🎭 *Меценатство - как юзать:*\n`/give @username [количество]` или ответом на соо получателя\n\nПример: `/give @derden993 5`")
+			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ* 🎁\n\n🎭 *Меценатство - как юзать:*\n`/give @username [количество]` или ответом на сообщение получателя\n\nПример: `/give @derden993 5`")
 		}
 
 		amount, err := parseAmount(args[len(args)-1])
