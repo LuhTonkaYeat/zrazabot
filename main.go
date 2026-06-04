@@ -78,11 +78,11 @@ func formatShitCount(count int) string {
 
 func formatStealCount(count int) string {
 	if count%10 == 1 && count%100 != 11 {
-		return "раз"
+		return "ограбление"
 	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
-		return "раза"
+		return "ограбления"
 	}
-	return "раз"
+	return "ограблений"
 }
 
 func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
@@ -242,11 +242,13 @@ func main() {
 		userName := c.Sender().FirstName
 		args := c.Args()
 
-		if len(args) == 0 {
-			return sendToTopic(b, c, "🎰 *ДА БУДЕТ ГЕМБЛИНГ* 🎰\n\n🎭 *Кража зраз - как юзать:*\n`/steal @username` или ответом на сообщение цели 😈")
+		if len(args) < 1 {
+			return sendToTopic(b, c, "🎰 *ДА БУДЕТ ГЕМБЛИНГ*\n\n🎭 *Кража зраз - как юзать:*\n`/steal @username`\n\nПример: `/steal @derden993`")
 		}
 
-		targetUserID, targetName, err := getUserFromMessage(c, args[0])
+		targetMention := strings.TrimPrefix(args[0], "@")
+
+		targetUserID, targetName, err := getUserByUsername(targetMention)
 		if err != nil {
 			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* %s", err.Error()))
 		}
@@ -260,7 +262,7 @@ func main() {
 		if now-stealCooldown < 3600*5 && stealCooldown != 0 {
 			secondsLeft := 3600*5 - (now - stealCooldown)
 			timeLeft := formatCooldown(secondsLeft)
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _Остынь, %s, додепа не будет!_\n_Попробуй тырнуть через: %s_\n\n🍽 А лучше сам похавай /zraza", userName, timeLeft))
+			return sendToTopic(b, c, fmt.Sprintf("⏰ Не, %s, додепа не будет!_\n_Попробуй тырнуть через: %s_\n\n🍽 А лучше сам похавай /zraza", userName, timeLeft))
 		}
 
 		total := getTotal(userID)
@@ -281,15 +283,15 @@ func main() {
 			stealAmount = total
 		}
 
-		success := rand.Intn(100) < 65
+		success := rand.Intn(100) < 50
 
 		if success {
-			addZrazy(userID, targetName, stealAmount)
+			addZrazy(userID, userName, stealAmount)
 			addZrazy(targetUserID, targetName, -stealAmount)
 			incrementStealSuccess(userID)
 			updateStealCooldown(userID, now)
 			message := fmt.Sprintf(
-				"🦝 *%s* тихонечко тырнул %d %s у *%s*!\n📊 Теперь у *%s* на счету - %d %s, у *%s* - %d %s",
+				"🦝 БЕБЕБЕ, *%s* тихонечко тырнул %d %s у *%s*!\n📊 Теперь у *%s* на счету %d %s,\nа у *%s* на балике %d %s",
 				userName, stealAmount, formatZrazyCount(stealAmount), targetName,
 				userName, getTotal(userID), formatZrazyCount(getTotal(userID)),
 				targetName, getTotal(targetUserID), formatZrazyCount(getTotal(targetUserID)),
@@ -302,7 +304,7 @@ func main() {
 			updateStealCooldown(userID, now)
 
 			message := fmt.Sprintf(
-				"💥 АХАХАХАХ, *%s* попытался украсть %d %s у *%s*, но ставка не зашла (ЛОШАРА) и он лузнул свои %d %s!\n📊 Терь у *%s* на балике - %d %s, у *%s* - %d %s",
+				"💥 ХИХИХИ, *%s* попытался украсть %d %s у *%s*, но ставка не зашла (ЛОШАРА) и он лузнул свои %d %s!\n📊 Терь у *%s* на балике %d %s,\nа у *%s* на счету %d %s",
 				userName, stealAmount, formatZrazyCount(stealAmount), targetName,
 				stealAmount, formatZrazyCount(stealAmount),
 				userName, getTotal(userID), formatZrazyCount(getTotal(userID)),
@@ -318,7 +320,7 @@ func main() {
 		args := c.Args()
 
 		if len(args) < 2 {
-			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ* 🎁\n\n🎭 *Меценатство - как юзать:*\n`/give @username [количество]` или ответом на сообщение получателя\n\nПример: `/give @derden993 5`")
+			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ*\n\n🎭 *Меценатство - как юзать:*\n`/give @username [количество]`\n\nПример: `/give @derden993 5`")
 		}
 
 		amount, err := parseAmount(args[len(args)-1])
@@ -326,13 +328,15 @@ func main() {
 			return sendToTopic(b, c, "❌ *Ошибка отправки:* Надо целое положительное число зраз для подарка")
 		}
 
-		targetUserID, targetName, err := getUserFromMessage(c, args[0])
+		targetMention := strings.TrimPrefix(args[0], "@")
+
+		targetUserID, targetName, err := getUserByUsername(targetMention)
 		if err != nil {
 			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* %s", err.Error()))
 		}
 
 		if targetUserID == userID {
-			return sendToTopic(b, c, "_Ты даун? Лучше подари зразы моему хозяину - @theG82_")
+			return sendToTopic(b, c, "_Лучше подари зразы моему хозяину @theG82_")
 		}
 
 		total := getTotal(userID)
@@ -372,13 +376,7 @@ type userGiveStats struct {
 	total int
 }
 
-func getUserFromMessage(c tele.Context, mention string) (int64, string, error) {
-	msg := c.Message()
-	if msg.ReplyTo != nil {
-		return msg.ReplyTo.Sender.ID, msg.ReplyTo.Sender.FirstName, nil
-	}
-
-	mention = strings.TrimPrefix(mention, "@")
+func getUserByUsername(username string) (int64, string, error) {
 	var userID int64
 	var userName string
 
@@ -389,9 +387,9 @@ func getUserFromMessage(c tele.Context, mention string) (int64, string, error) {
 	}
 	defer db.Close()
 
-	err = db.QueryRow("SELECT user_id, user_name FROM users WHERE user_name LIKE ?", "%"+mention+"%").Scan(&userID, &userName)
+	err = db.QueryRow("SELECT user_id, user_name FROM users WHERE user_name LIKE ?", "%"+username+"%").Scan(&userID, &userName)
 	if err != nil {
-		return 0, "", fmt.Errorf("пользователь @%s не найден в базе", mention)
+		return 0, "", fmt.Errorf("пользователь @%s не найден в базе", username)
 	}
 
 	return userID, userName, nil
