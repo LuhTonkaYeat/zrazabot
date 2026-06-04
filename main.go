@@ -142,7 +142,7 @@ func main() {
 			updateLastUsed(userID, now)
 			garnish := garnishes[rand.Intn(len(garnishes))]
 			message := fmt.Sprintf(
-				"_✨✨✨ ЧУДО! ЧЗХХХ!!! ✨✨✨_\n_%s нашел заначку и сожрал 67 зраз с %s!!!_\n📊 _А всего он схавал - %d %s!_\n\n🍽 _Голоден? /zraza_",
+				"_✨✨✨ ЧУДО! ЧЗХХХ!!! ✨✨✨_\n_%s нашел заначку и сожрал 67 зраз с %s!!!_\n\n📊 _А всего он схавал - %d %s!_\n\n🍽 _Голоден? /zraza_",
 				userName, garnish, total, formatZrazyCount(total),
 			)
 			return sendToTopic(b, c, message)
@@ -153,8 +153,8 @@ func main() {
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
 			shitTotal := getShitTotal(userID)
-			phrase := fmt.Sprintf("💩 ХЕХЕХЕХЕ _%s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n🍽 Голоден? /zraza", userName)
-			phrase += fmt.Sprintf("\n\n💩 _Всего тарелок говна им навернуто: %d %s_", shitTotal, formatShitCount(shitTotal))
+			phrase := fmt.Sprintf("💩 ХЕХЕХЕХЕ _%s навернул тарелку говнеца и обнулил свой счётчик зраз!_", userName)
+			phrase += fmt.Sprintf("\n\n💩 _Всего тарелок говна им навернуто: %d %s_\n\n🍽 Голоден? /zraza", shitTotal, formatShitCount(shitTotal))
 			return sendToTopic(b, c, phrase)
 		}
 
@@ -255,15 +255,22 @@ func main() {
 			return sendToTopic(b, c, "🎰 *ДА БУДЕТ ГЕМБЛИНГ*\n\n🎭 *Кража зраз - как юзать:*\n`/steal @username`\n\nПример: `/steal @derden993`")
 		}
 
-		targetMention := strings.TrimPrefix(args[0], "@")
+		targetUsername := strings.TrimPrefix(args[0], "@")
 
-		targetUserID, targetName, err := getUserByUsername(targetMention)
+		targetChat, err := b.ChatByUsername(targetUsername)
 		if err != nil {
-			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* %s", err.Error()))
+			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* Пользователь @%s не найден в Telegram", targetUsername))
 		}
+
+		targetUserID := targetChat.ID
+		targetName := targetChat.FirstName
 
 		if targetUserID == userID {
 			return sendToTopic(b, c, "_Слышь, умник, я щас мамке твоей пожалуюсь, что ты абузить пытаешься, усёк? 😉_")
+		}
+
+		if getTotal(targetUserID) == 0 {
+			addZrazy(targetUserID, targetName, 0)
 		}
 
 		stealCooldown := getStealCooldown(userID)
@@ -271,7 +278,7 @@ func main() {
 		if now-stealCooldown < 3600*5 && stealCooldown != 0 {
 			secondsLeft := 3600*5 - (now - stealCooldown)
 			timeLeft := formatCooldown(secondsLeft)
-			return sendToTopic(b, c, fmt.Sprintf("⏰ Не, %s, додепа не будет!_\n_Попробуй тырнуть через: %s_\n\n🍽 А лучше сам похавай /zraza", userName, timeLeft))
+			return sendToTopic(b, c, fmt.Sprintf("⏰ Не, %s, додепа не будет!\n_Попробуй тырнуть через: %s_\n\n🍽 А лучше сам похавай /zraza", userName, timeLeft))
 		}
 
 		total := getTotal(userID)
@@ -337,15 +344,22 @@ func main() {
 			return sendToTopic(b, c, "❌ *Ошибка отправки:* Надо целое положительное число зраз для подарка")
 		}
 
-		targetMention := strings.TrimPrefix(args[0], "@")
+		targetUsername := strings.TrimPrefix(args[0], "@")
 
-		targetUserID, targetName, err := getUserByUsername(targetMention)
+		targetChat, err := b.ChatByUsername(targetUsername)
 		if err != nil {
-			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* %s", err.Error()))
+			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* Пользователь @%s не найден в Telegram", targetUsername))
 		}
+
+		targetUserID := targetChat.ID
+		targetName := targetChat.FirstName
 
 		if targetUserID == userID {
 			return sendToTopic(b, c, "_Лучше подари зразы моему хозяину @theG82_")
+		}
+
+		if getTotal(targetUserID) == 0 {
+			addZrazy(targetUserID, targetName, 0)
 		}
 
 		total := getTotal(userID)
@@ -388,25 +402,6 @@ type userCountStats struct {
 type userGiveStats struct {
 	name  string
 	total int
-}
-
-func getUserByUsername(username string) (int64, string, error) {
-	var userID int64
-	var userName string
-
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		return 0, "", fmt.Errorf("ошибка базы данных")
-	}
-	defer db.Close()
-
-	err = db.QueryRow("SELECT user_id, user_name FROM users WHERE user_name LIKE ?", "%"+username+"%").Scan(&userID, &userName)
-	if err != nil {
-		return 0, "", fmt.Errorf("пользователь @%s не найден в базе", username)
-	}
-
-	return userID, userName, nil
 }
 
 func parseAmount(s string) (int, error) {
