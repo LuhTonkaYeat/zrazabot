@@ -187,7 +187,16 @@ func main() {
 	})
 
 	b.Handle("/top", func(c tele.Context) error {
-		message := "_📊 Наша стата:_\n\n"
+		message := ""
+
+		maxTotalLeaders := getMaxTotalLeaderboard(5)
+		if len(maxTotalLeaders) > 0 {
+			message += "🏆🏆🏆 *АБСОЛЮТНЫЕ ЛИДЕРЫ ПО ЗРАЗОПОЕДАНИЮ:*\n\n"
+			for i, l := range maxTotalLeaders {
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, l.name, l.maxTotal, formatZrazyCount(l.maxTotal))
+			}
+			message += "\n"
+		}
 
 		shitLeaders := getShitLeaderboard(5)
 		if len(shitLeaders) > 0 {
@@ -224,8 +233,8 @@ func main() {
 			}
 		}
 
-		if len(message) == len("_📊 Наша стата:_\n\n") {
-			message += "_Пока стата пустая..._"
+		if len(message) == 0 {
+			message = "_Пока стата пустая..._"
 		}
 
 		return sendToTopic(b, c, message)
@@ -364,6 +373,11 @@ func main() {
 type userStats struct {
 	name  string
 	total int
+}
+
+type userMaxTotalStats struct {
+	name     string
+	maxTotal int
 }
 
 type userCountStats struct {
@@ -710,6 +724,40 @@ func getLeaderboard(limit int) []userStats {
 	for rows.Next() {
 		var u userStats
 		if err := rows.Scan(&u.name, &u.total); err != nil {
+			log.Println("DB error:", err)
+			continue
+		}
+		users = append(users, u)
+	}
+
+	return users
+}
+
+func getMaxTotalLeaderboard(limit int) []userMaxTotalStats {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT user_name, max_total FROM users 
+		WHERE max_total > 0 
+		ORDER BY max_total DESC 
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		log.Println("DB error:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var users []userMaxTotalStats
+	for rows.Next() {
+		var u userMaxTotalStats
+		if err := rows.Scan(&u.name, &u.maxTotal); err != nil {
 			log.Println("DB error:", err)
 			continue
 		}
