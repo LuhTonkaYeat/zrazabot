@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -249,21 +248,14 @@ func main() {
 	b.Handle("/steal", func(c tele.Context) error {
 		userID := c.Sender().ID
 		userName := c.Sender().FirstName
-		args := c.Args()
+		msg := c.Message()
 
-		if len(args) < 1 {
-			return sendToTopic(b, c, "🎰 *ДА БУДЕТ ГЕМБЛИНГ*\n\n🎭 *Кража зраз - как юзать:*\n`/steal @username`\n\nПример: `/steal @derden993`")
+		if msg.ReplyTo == nil {
+			return sendToTopic(b, c, "🎰 *ДА БУДЕТ ГЕМБЛИНГ*\n\n🎭 *Кража зраз - как юзать:*\n_Ответь на сообщение цели:\n`/steal`_")
 		}
 
-		targetUsername := strings.TrimPrefix(args[0], "@")
-
-		targetChat, err := b.ChatByUsername(targetUsername)
-		if err != nil {
-			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* Пользователь @%s не найден в Telegram", targetUsername))
-		}
-
-		targetUserID := targetChat.ID
-		targetName := targetChat.FirstName
+		targetUserID := msg.ReplyTo.Sender.ID
+		targetName := msg.ReplyTo.Sender.FirstName
 
 		if targetUserID == userID {
 			return sendToTopic(b, c, "_Слышь, умник, я щас мамке твоей пожалуюсь, что ты абузить пытаешься, усёк? 😉_")
@@ -334,25 +326,23 @@ func main() {
 		userID := c.Sender().ID
 		userName := c.Sender().FirstName
 		args := c.Args()
+		msg := c.Message()
 
-		if len(args) < 2 {
-			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ*\n\n🎭 *Меценатство - как юзать:*\n`/give @username [количество]`\n\nПример: `/give @derden993 5`")
+		if len(args) < 1 {
+			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ*\n\n🎭 *Подарки - как юзать:*\n`Ответь на соо получателя:\n/give [количество]`\n\nПример: `/give 5`")
 		}
 
-		amount, err := parseAmount(args[len(args)-1])
+		amount, err := parseAmount(args[0])
 		if err != nil {
 			return sendToTopic(b, c, "❌ *Ошибка отправки:* Надо целое положительное число зраз для подарка")
 		}
 
-		targetUsername := strings.TrimPrefix(args[0], "@")
-
-		targetChat, err := b.ChatByUsername(targetUsername)
-		if err != nil {
-			return sendToTopic(b, c, fmt.Sprintf("❌ *Ошибка:* Пользователь @%s не найден в Telegram", targetUsername))
+		if msg.ReplyTo == nil {
+			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ*\n\n🎭 *Подарки - как юзать:*\n_Ответь на соо получателя:\n`/give [количество]`_\n\nПример: `/give 5`")
 		}
 
-		targetUserID := targetChat.ID
-		targetName := targetChat.FirstName
+		targetUserID := msg.ReplyTo.Sender.ID
+		targetName := msg.ReplyTo.Sender.FirstName
 
 		if targetUserID == userID {
 			return sendToTopic(b, c, "_Лучше подари зразы моему хозяину @theG82_")
