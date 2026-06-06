@@ -333,7 +333,7 @@ func main() {
 		args := c.Args()
 
 		if len(args) < 1 {
-			return sendToTopic(b, c, "🎰 *Гемблинг*\n\n💎 *Слоты - как юзать?*\n\n_Просто напиши:\n'/slot [ставка (≤33)]'_")
+			return sendToTopic(b, c, "🎰 *Гемблинг*\n\n💎 *Слоты - как юзать?*\n_Просто напиши:\n'/slot [ставка (≤33)]'_")
 		}
 
 		amount, err := parseAmount(args[0])
