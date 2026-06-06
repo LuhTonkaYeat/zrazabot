@@ -134,7 +134,7 @@ func main() {
 
 		rarity := rand.Intn(100)
 
-		if rarity < 3 {
+		if rarity < 5 {
 			addZrazy(userID, userName, 67)
 			incrementLuckyCount(userID)
 			total := getTotal(userID)
@@ -147,7 +147,7 @@ func main() {
 			return sendToTopic(b, c, message)
 		}
 
-		if rarity < 10 {
+		if rarity < 15 {
 			resetZrazy(userID)
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
