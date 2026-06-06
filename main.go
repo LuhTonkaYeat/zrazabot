@@ -524,6 +524,7 @@ func initDB() {
 			last_used INTEGER DEFAULT 0,
 			shit_total INTEGER DEFAULT 0,
 			steal_cooldown INTEGER DEFAULT 0,
+			slot_cooldown INTEGER DEFAULT 0,
 			lucky_count INTEGER DEFAULT 0,
 			steal_success INTEGER DEFAULT 0,
 			steal_fail INTEGER DEFAULT 0,
@@ -532,11 +533,6 @@ func initDB() {
 	`)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	_, err = db.Exec(`ALTER TABLE users ADD COLUMN slot_cooldown INTEGER DEFAULT 0`)
-	if err != nil {
-		log.Println("Column slot_cooldown already exists or migration skipped:", err)
 	}
 }
 
