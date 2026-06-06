@@ -396,19 +396,7 @@ func main() {
 			multiplier = 1
 		}
 
-		formatSlot := func(symbol string) string {
-			switch symbol {
-			case "7️⃣":
-				return " 7️⃣ "
-			case "💎":
-				return " 💎 "
-			default:
-				return fmt.Sprintf(" %s ", symbol)
-			}
-		}
-
-		slotDisplay := fmt.Sprintf("┌─────┬─────┬─────┐\n│%s│%s│%s│\n└─────┴─────┴─────┘",
-			formatSlot(results[0]), formatSlot(results[1]), formatSlot(results[2]))
+		slotDisplay := fmt.Sprintf("🎰  %s | %s | %s  🎰", results[0], results[1], results[2])
 
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
@@ -423,8 +411,7 @@ func main() {
 				slots[rand.Intn(len(slots))],
 			}
 
-			newSlotDisplay := fmt.Sprintf("┌─────┬─────┬─────┐\n│%s│%s│%s│\n└─────┴─────┴─────┘",
-				formatSlot(newResults[0]), formatSlot(newResults[1]), formatSlot(newResults[2]))
+			newSlotDisplay := fmt.Sprintf("🎰  %s | %s | %s  🎰", newResults[0], newResults[1], newResults[2])
 
 			bonusMultiplier := 0
 			if newResults[0] == "💎" && newResults[1] == "💎" && newResults[2] == "💎" {
