@@ -346,12 +346,12 @@ func main() {
 		args := c.Args()
 
 		if len(args) < 1 {
-			return sendToTopic(b, c, "🎰 *Гемблинг*\n\n💎 *Слоты - как юзать?*\n_Просто напиши:\n'/slot [ставка (≤33)]'_")
+			return sendToTopic(b, c, "🎰 *Гемблинг*\n\n💎 *Слоты - как юзать?*\n_Просто напиши:\n'/slot [ставка (≤10)]'_")
 		}
 
 		amount, err := parseAmount(args[0])
-		if err != nil || amount > 33 {
-			return sendToTopic(b, c, "_❌ *Ошибка отправки:* Надо целое положительное число зраз, <= 33 для ставки. Иначе ты слудоманишься хах_")
+		if err != nil || amount > 10 {
+			return sendToTopic(b, c, "_❌ *Ошибка отправки:* Надо целое положительное число зраз, <= 10 для ставки. Иначе ты слудоманишься хах_")
 		}
 
 		total := getTotal(userID)
@@ -365,8 +365,8 @@ func main() {
 
 		lastSlot := getSlotCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastSlot < 30 && lastSlot != 0 {
-			secondsLeft := 30 - (now - lastSlot)
+		if now-lastSlot < 60 && lastSlot != 0 {
+			secondsLeft := 60 - (now - lastSlot)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %d секунд_", userFirstName, secondsLeft))
 		}
 
@@ -396,7 +396,7 @@ func main() {
 			multiplier = 1
 		}
 
-		slotDisplay := fmt.Sprintf("🎰  %s | %s | %s  🎰", results[0], results[1], results[2])
+		slotDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", results[0], results[1], results[2])
 
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
@@ -411,7 +411,7 @@ func main() {
 				slots[rand.Intn(len(slots))],
 			}
 
-			newSlotDisplay := fmt.Sprintf("🎰  %s | %s | %s  🎰", newResults[0], newResults[1], newResults[2])
+			newSlotDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", newResults[0], newResults[1], newResults[2])
 
 			bonusMultiplier := 0
 			if newResults[0] == "💎" && newResults[1] == "💎" && newResults[2] == "💎" {
