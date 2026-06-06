@@ -365,8 +365,8 @@ func main() {
 
 		lastSlot := getSlotCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastSlot < 10 && lastSlot != 0 {
-			secondsLeft := 10 - (now - lastSlot)
+		if now-lastSlot < 30 && lastSlot != 0 {
+			secondsLeft := 30 - (now - lastSlot)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %d секунд_", userFirstName, secondsLeft))
 		}
 
@@ -399,10 +399,12 @@ func main() {
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
 			message := fmt.Sprintf(
-				"%s | %s | %s\n\n_Выпал 💎! Щас будет бонусный бросок..._",
+				"%s | %s | %s\n\n_Ты проиграл, ноооо..! Выпал 💎! Щас будет бонусный бросок..._",
 				results[0], results[1], results[2],
 			)
 			sendToTopic(b, c, message)
+
+			time.Sleep(2 * time.Second)
 
 			newResults := []string{
 				slots[rand.Intn(len(slots))],
