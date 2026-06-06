@@ -41,7 +41,7 @@ func formatCooldown(secondsLeft int64) string {
 	return fmt.Sprintf("%dс", secs)
 }
 
-func formatZrazyCount(count int) string {
+func formatZrazyNominative(count int) string {
 	if count%10 == 1 && count%100 != 11 {
 		return "зраза"
 	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
@@ -50,9 +50,20 @@ func formatZrazyCount(count int) string {
 	return "зраз"
 }
 
-func formatEatenZrazy(count int) string {
+func formatZrazyAccusative(count int) string {
 	if count%10 == 1 && count%100 != 11 {
 		return "зразу"
+	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
+		return "зразы"
+	}
+	return "зраз"
+}
+
+func formatZrazyGenitive(count int) string {
+	if count%10 == 1 && count%100 != 11 {
+		return "зразы"
+	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
+		return "зраз"
 	}
 	return "зраз"
 }
@@ -140,15 +151,16 @@ func main() {
 			incrementLuckyCount(userID)
 			updateLastUsed(userID, now)
 			garnish := garnishes[rand.Intn(len(garnishes))]
-			return sendToTopic(b, c, fmt.Sprintf("_✨✨✨ ЧУДО! ЧЗХХХ!!!_\n*%s* _нашел заначку и сожрал 67 зраз с %s!!!\n\n🍽 /zraza_",
-				userName, garnish))
+			total := getTotal(userID)
+			return sendToTopic(b, c, fmt.Sprintf("_✨✨✨ ЧУДО! ЧЗХХХ!!!_\n*%s* _нашел заначку и сожрал 67 зраз с %s!!!_\n\n📊 _А всего он схавал - %d %s!_\n\n🍽 /zraza_",
+				userName, garnish, total, formatZrazyNominative(total)))
 		}
 
 		if rarity < 15 {
 			resetZrazy(userID)
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
-			return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!\n\n🍽 Голоден? /zraza_",
+			return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽 Голоден? /zraza_",
 				userName))
 		}
 
@@ -158,7 +170,7 @@ func main() {
 		updateLastUsed(userID, now)
 
 		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d %s и %s!!!_\n\n🍽 _Голоден? /zraza_",
-			userName, eaten, formatEatenZrazy(eaten), garnish))
+			userName, eaten, formatZrazyAccusative(eaten), garnish))
 	})
 
 	b.Handle("/stat", func(c tele.Context) error {
@@ -169,7 +181,7 @@ func main() {
 
 		message := "🥣 *Актуальный еврейтинг СОШ №1 по поеданию зраз:*\n\n"
 		for i, u := range users {
-			message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, u.name, u.total, formatZrazyCount(u.total))
+			message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, u.name, u.total, formatZrazyNominative(u.total))
 		}
 
 		return sendToTopic(b, c, message)
@@ -182,7 +194,7 @@ func main() {
 		if len(maxTotalLeaders) > 0 {
 			message += "🏆🏆🏆 *АБСОЛЮТНЫЕ ЛИДЕРЫ ПО ЗРАЗОПОЕДАНИЮ:*\n\n"
 			for i, l := range maxTotalLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, l.name, l.maxTotal, formatZrazyCount(l.maxTotal))
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, l.name, l.maxTotal, formatZrazyNominative(l.maxTotal))
 			}
 			message += "\n"
 		}
@@ -218,8 +230,9 @@ func main() {
 		if len(giveLeaders) > 0 {
 			message += "_🎁 Топ донатеров (подаренные зразы):_\n"
 			for i, g := range giveLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, g.name, g.total, formatZrazyCount(g.total))
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, g.name, g.total, formatZrazyGenitive(g.total))
 			}
+			message += "\n"
 		}
 
 		if len(message) == 0 {
@@ -268,8 +281,8 @@ func main() {
 
 		targetTotal := getTotal(targetUserID)
 		if targetTotal < 5 {
-			return sendToTopic(b, c, fmt.Sprintf("😢 _У %s %d %s, с него нех взять..._",
-				targetName, targetTotal, formatZrazyCount(targetTotal)))
+			return sendToTopic(b, c, fmt.Sprintf("😢 _У %s всего %d %s, с него нех взять..._",
+				targetName, targetTotal, formatZrazyGenitive(targetTotal)))
 		}
 
 		stealAmount := rand.Intn(5) + 1
@@ -281,15 +294,15 @@ func main() {
 			incrementStealSuccess(userID)
 			updateStealCooldown(userID, now)
 			return sendToTopic(b, c, fmt.Sprintf("🦝 БЕБЕБЕ, *%s* тихонечко тырнул %d %s у *%s*!",
-				userName, stealAmount, formatZrazyCount(stealAmount), targetName))
+				userName, stealAmount, formatZrazyAccusative(stealAmount), targetName))
 		} else {
 			addZrazy(userID, userName, -stealAmount)
 			addZrazy(targetUserID, targetName, stealAmount)
 			incrementStealFail(userID)
 			updateStealCooldown(userID, now)
 			return sendToTopic(b, c, fmt.Sprintf("💥 ХИХИХИ, *%s* попытался украсть %d %s у *%s*, но ставка не зашла (ЛОШАРА) и он лузнул свои %d %s!",
-				userName, stealAmount, formatZrazyCount(stealAmount), targetName,
-				stealAmount, formatZrazyCount(stealAmount)))
+				userName, stealAmount, formatZrazyAccusative(stealAmount), targetName,
+				stealAmount, formatZrazyAccusative(stealAmount)))
 		}
 	})
 
@@ -317,14 +330,14 @@ func main() {
 
 		total := getTotal(userID)
 		if total < amount {
-			return sendToTopic(b, c, fmt.Sprintf("⚠️ _У тя только %d %s, для подарка не хватает_", total, formatZrazyCount(total)))
+			return sendToTopic(b, c, fmt.Sprintf("⚠️ _У тя только %d %s, для подарка не хватает_", total, formatZrazyGenitive(total)))
 		}
 
 		addZrazy(userID, userName, -amount)
 		addZrazy(targetUserID, targetName, amount)
 		incrementGive(userID, amount)
 		return sendToTopic(b, c, fmt.Sprintf("🎁🎁🎁 ЮХУУУ, *%s* подарил %d %s пользователю *%s*!",
-			userName, amount, formatZrazyCount(amount), targetName))
+			userName, amount, formatZrazyAccusative(amount), targetName))
 	})
 
 	b.Handle("/slot", func(c tele.Context) error {
@@ -347,7 +360,7 @@ func main() {
 		}
 		if total < amount {
 			diff := amount - total
-			return sendToTopic(b, c, fmt.Sprintf("*%s*, Понизь ставку на %d %s, у тя не хватает балика", userFirstName, diff, formatZrazyCount(diff)))
+			return sendToTopic(b, c, fmt.Sprintf("*%s*, Понизь ставку на %d %s, у тя не хватает балика", userFirstName, diff, formatZrazyAccusative(diff)))
 		}
 
 		lastSlot := getSlotCooldown(userID)
@@ -423,7 +436,7 @@ func main() {
 				resultMsg := fmt.Sprintf(
 					"%s | %s | %s\n\n*%s* выиграл %d %s в бонусном раунде! (x%d)",
 					newResults[0], newResults[1], newResults[2],
-					userFirstName, winAmount, formatZrazyCount(winAmount), bonusMultiplier,
+					userFirstName, winAmount, formatZrazyAccusative(winAmount), bonusMultiplier,
 				)
 				return sendToTopic(b, c, resultMsg)
 			} else {
@@ -431,7 +444,7 @@ func main() {
 				resultMsg := fmt.Sprintf(
 					"%s | %s | %s\n\n*%s* проиграл %d %s в бонусном раунде... Анлак)",
 					newResults[0], newResults[1], newResults[2],
-					userFirstName, amount, formatZrazyCount(amount),
+					userFirstName, amount, formatZrazyAccusative(amount),
 				)
 				return sendToTopic(b, c, resultMsg)
 			}
@@ -443,17 +456,17 @@ func main() {
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
 			message := fmt.Sprintf(
-				"_🎰 %s | %s | %s_\n\n*%s* выиграл %d %s! (x%d)",
+				"%s | %s | %s\n\n*%s* выиграл %d %s! (x%d)",
 				results[0], results[1], results[2],
-				userFirstName, winAmount, formatZrazyCount(winAmount), multiplier,
+				userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier,
 			)
 			return sendToTopic(b, c, message)
 		} else {
 			addZrazy(userID, userFirstName, -amount)
 			message := fmt.Sprintf(
-				"_🎰 %s | %s | %s_\n\n*%s* проиграл %d %s... Нууу в следующий раз повезёт)",
+				"%s | %s | %s\n\n*%s* проиграл %d %s... Нууу в следующий раз повезёт)",
 				results[0], results[1], results[2],
-				userFirstName, amount, formatZrazyCount(amount),
+				userFirstName, amount, formatZrazyAccusative(amount),
 			)
 			return sendToTopic(b, c, message)
 		}
