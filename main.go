@@ -434,7 +434,7 @@ func main() {
 			if winAmount > 0 {
 				addZrazy(userID, userFirstName, winAmount)
 				resultMsg := fmt.Sprintf(
-					"%s | %s | %s\n\n*%s* выиграл %d %s в бонусном раунде! (x%d)",
+					"%s | %s | %s\n\n*%s* выиграл %d %s в бонусном раунде! (коэф. x%d)",
 					newResults[0], newResults[1], newResults[2],
 					userFirstName, winAmount, formatZrazyAccusative(winAmount), bonusMultiplier,
 				)
@@ -456,7 +456,7 @@ func main() {
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
 			message := fmt.Sprintf(
-				"%s | %s | %s\n\n*%s* выиграл %d %s! (x%d)",
+				"%s | %s | %s\n\n*%s* выиграл %d %s! (коэф. x%d)",
 				results[0], results[1], results[2],
 				userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier,
 			)
