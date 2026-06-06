@@ -241,7 +241,7 @@ func main() {
 		msg := c.Message()
 
 		if msg.ReplyTo == nil {
-			return sendToTopic(b, c, "🥷🏻 *Ском*\n\n🎭 *Кража зраз - как юзать:*\n_Ответь на сообщение цели:\n`/steal`_")
+			return sendToTopic(b, c, "🥷🏻 *Ском*\n\n🎭 *Кража зраз - как юзать:*\n_Ответь на соо цели:\n'/steal'_")
 		}
 
 		targetUserID := msg.ReplyTo.Sender.ID
@@ -300,7 +300,7 @@ func main() {
 		msg := c.Message()
 
 		if len(args) < 1 || msg.ReplyTo == nil {
-			return sendToTopic(b, c, "🎁 *С ДНЕМ ЗРАЗЫ*\n\n🎭 *Подарки - как юзать:*\n`Ответь на соо получателя:\n/give [количество]`\n\nПример: `/give 5`")
+			return sendToTopic(b, c, "🎁 *С днем зразы*\n\n🎭 *Подарки - как юзать:*\n_Ответь на соо получателя:\n'/give [количество]'_")
 		}
 
 		amount, err := parseAmount(args[0])
@@ -333,7 +333,7 @@ func main() {
 		args := c.Args()
 
 		if len(args) < 1 {
-			return sendToTopic(b, c, "_🎰 *ГЕМБЛИНГ*\n\n💎 Слоты - как юзать?\n\nПиши: `/slot [ставка (<=33)]`_")
+			return sendToTopic(b, c, "🎰 *Гемблинг*\n\n💎 *Слоты - как юзать?*\n\n_Просто напиши:\n'/slot [ставка (≤33)]'_")
 		}
 
 		amount, err := parseAmount(args[0])
