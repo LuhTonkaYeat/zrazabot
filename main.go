@@ -396,7 +396,7 @@ func main() {
 			multiplier = 1
 		}
 
-		slotDisplay := fmt.Sprintf("🎰  %s | %s | %s  🎰", results[0], results[1], results[2])
+		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
 
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
