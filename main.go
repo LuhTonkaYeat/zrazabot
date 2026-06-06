@@ -386,7 +386,7 @@ func main() {
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
 			message := fmt.Sprintf(
-				"_🎰 %s | %s | %s_\n\n_Выпал 💎! Щас будет бонусный бросок..._",
+				"%s | %s | %s\n\n_Выпал 💎! Щас будет бонусный бросок..._",
 				results[0], results[1], results[2],
 			)
 			sendToTopic(b, c, message)
@@ -421,7 +421,7 @@ func main() {
 			if winAmount > 0 {
 				addZrazy(userID, userFirstName, winAmount)
 				resultMsg := fmt.Sprintf(
-					"_🎰 %s | %s | %s_\n\n*%s* выиграл %d %s в бонусном раунде! (x%d)",
+					"%s | %s | %s\n\n*%s* выиграл %d %s в бонусном раунде! (x%d)",
 					newResults[0], newResults[1], newResults[2],
 					userFirstName, winAmount, formatZrazyCount(winAmount), bonusMultiplier,
 				)
@@ -429,7 +429,7 @@ func main() {
 			} else {
 				addZrazy(userID, userFirstName, -amount)
 				resultMsg := fmt.Sprintf(
-					"_🎰 %s | %s | %s_\n\n*%s* проиграл %d %s в бонусном раунде... Анлак)",
+					"%s | %s | %s\n\n*%s* проиграл %d %s в бонусном раунде... Анлак)",
 					newResults[0], newResults[1], newResults[2],
 					userFirstName, amount, formatZrazyCount(amount),
 				)
