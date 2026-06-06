@@ -396,14 +396,23 @@ func main() {
 			multiplier = 1
 		}
 
-		slotDisplay := fmt.Sprintf("┌─────┬─────┬─────┐\n│  %s  │  %s  │  %s  │\n└─────┴─────┴─────┘", results[0], results[1], results[2])
+		formatSlot := func(symbol string) string {
+			switch symbol {
+			case "7️⃣":
+				return " 7️⃣ "
+			case "💎":
+				return " 💎 "
+			default:
+				return fmt.Sprintf(" %s ", symbol)
+			}
+		}
+
+		slotDisplay := fmt.Sprintf("┌─────┬─────┬─────┐\n│%s│%s│%s│\n└─────┴─────┴─────┘",
+			formatSlot(results[0]), formatSlot(results[1]), formatSlot(results[2]))
 
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
-			message := fmt.Sprintf(
-				"%s\n\n_Ты проиграл, ноооо..! Выпал 💎! Щас будет бонусный бросок..._",
-				slotDisplay,
-			)
+			message := fmt.Sprintf("%s\n\n_Ты проиграл, ноооо..! Выпал 💎! Щас будет бонусный бросок..._", slotDisplay)
 			sendToTopic(b, c, message)
 
 			time.Sleep(2 * time.Second)
@@ -414,7 +423,8 @@ func main() {
 				slots[rand.Intn(len(slots))],
 			}
 
-			newSlotDisplay := fmt.Sprintf("┌─────┬─────┬─────┐\n│  %s  │  %s  │  %s  │\n└─────┴─────┴─────┘", newResults[0], newResults[1], newResults[2])
+			newSlotDisplay := fmt.Sprintf("┌─────┬─────┬─────┐\n│%s│%s│%s│\n└─────┴─────┴─────┘",
+				formatSlot(newResults[0]), formatSlot(newResults[1]), formatSlot(newResults[2]))
 
 			bonusMultiplier := 0
 			if newResults[0] == "💎" && newResults[1] == "💎" && newResults[2] == "💎" {
@@ -439,19 +449,13 @@ func main() {
 
 			if winAmount > 0 {
 				addZrazy(userID, userFirstName, winAmount)
-				resultMsg := fmt.Sprintf(
-					"%s\n\n*%s* выиграл %d %s в бонусном раунде! (коэф. x%d)",
-					newSlotDisplay,
-					userFirstName, winAmount, formatZrazyAccusative(winAmount), bonusMultiplier,
-				)
+				resultMsg := fmt.Sprintf("%s\n\n*%s* выиграл %d %s в бонусном раунде! (коэф. x%d)",
+					newSlotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), bonusMultiplier)
 				return sendToTopic(b, c, resultMsg)
 			} else {
 				addZrazy(userID, userFirstName, -amount)
-				resultMsg := fmt.Sprintf(
-					"%s\n\n*%s* проиграл %d %s в бонусном раунде... Анлак)",
-					newSlotDisplay,
-					userFirstName, amount, formatZrazyAccusative(amount),
-				)
+				resultMsg := fmt.Sprintf("%s\n\n*%s* проиграл %d %s в бонусном раунде... Анлак)",
+					newSlotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
 				return sendToTopic(b, c, resultMsg)
 			}
 		}
@@ -461,19 +465,13 @@ func main() {
 
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
-			message := fmt.Sprintf(
-				"%s\n\n*%s* выиграл %d %s! (коэф. x%d)",
-				slotDisplay,
-				userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier,
-			)
+			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (коэф. x%d)",
+				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
 			return sendToTopic(b, c, message)
 		} else {
 			addZrazy(userID, userFirstName, -amount)
-			message := fmt.Sprintf(
-				"%s\n\n*%s* проиграл %d %s... Нууу в следующий раз повезёт)",
-				slotDisplay,
-				userFirstName, amount, formatZrazyAccusative(amount),
-			)
+			message := fmt.Sprintf("%s\n\n*%s* проиграл %d %s... Нууу в следующий раз повезёт)",
+				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
 			return sendToTopic(b, c, message)
 		}
 	})
