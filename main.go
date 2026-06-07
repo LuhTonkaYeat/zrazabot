@@ -371,7 +371,6 @@ func main() {
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
 
-		// Получаем информацию о топике из сообщения
 		msg := c.Message()
 		chat := msg.Chat
 		topicID := msg.ThreadID
@@ -382,13 +381,12 @@ func main() {
 			DisableWebPagePreview: true,
 		}
 
-		// Отправляем начальное сообщение в правильный топик
 		startMsg, err := b.Send(chat, "🎰 *Крутим барабаны...* 🎰", opt)
 		if err != nil {
 			return err
 		}
 
-		for i := 0; i < 15; i++ {
+		for i := 0; i < 10; i++ {
 			animResults := []string{
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
@@ -396,7 +394,7 @@ func main() {
 			}
 			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(150 * time.Millisecond)
 		}
 
 		results := []string{
