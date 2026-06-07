@@ -371,6 +371,23 @@ func main() {
 		}
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
+
+		msg, err := b.Send(c.Chat(), "🎰 *Крутим барабаны...* 🎰", tele.ModeMarkdown)
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < 15; i++ {
+			animResults := []string{
+				slots[rand.Intn(len(slots))],
+				slots[rand.Intn(len(slots))],
+				slots[rand.Intn(len(slots))],
+			}
+			animDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", animResults[0], animResults[1], animResults[2])
+			b.Edit(msg, animDisplay, tele.ModeMarkdown)
+			time.Sleep(80 * time.Millisecond)
+		}
+
 		results := []string{
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
@@ -400,8 +417,7 @@ func main() {
 
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
-			message := fmt.Sprintf("%s\n\n_Ты проиграл, ноооо..! Выпал 💎! Ща будет додеп..._", slotDisplay)
-			sendToTopic(b, c, message)
+			b.Edit(msg, fmt.Sprintf("%s\n\n_Ты проиграл, ноооо..! Выпал 💎! Ща будет додеп..._", slotDisplay), tele.ModeMarkdown)
 
 			time.Sleep(2 * time.Second)
 
@@ -438,12 +454,14 @@ func main() {
 				addZrazy(userID, userFirstName, winAmount)
 				resultMsg := fmt.Sprintf("%s\n\n*%s* выиграл %d %s в бонусном раунде! (коэф. x%d)",
 					newSlotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), bonusMultiplier)
-				return sendToTopic(b, c, resultMsg)
+				b.Edit(msg, resultMsg, tele.ModeMarkdown)
+				return nil
 			} else {
 				addZrazy(userID, userFirstName, -amount)
 				resultMsg := fmt.Sprintf("%s\n\n*%s* проиграл %d %s в бонусном раунде... Анлак)",
 					newSlotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
-				return sendToTopic(b, c, resultMsg)
+				b.Edit(msg, resultMsg, tele.ModeMarkdown)
+				return nil
 			}
 		}
 
@@ -454,12 +472,14 @@ func main() {
 			addZrazy(userID, userFirstName, winAmount)
 			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (коэф. x%d)",
 				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
-			return sendToTopic(b, c, message)
+			b.Edit(msg, message, tele.ModeMarkdown)
+			return nil
 		} else {
 			addZrazy(userID, userFirstName, -amount)
 			message := fmt.Sprintf("%s\n\n*%s* проиграл %d %s... Нууу в следующий раз повезёт)",
 				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
-			return sendToTopic(b, c, message)
+			b.Edit(msg, message, tele.ModeMarkdown)
+			return nil
 		}
 	})
 
