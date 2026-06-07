@@ -140,7 +140,7 @@ func main() {
 		if now-lastUsed < 3600 && lastUsed != 0 {
 			secondsLeft := 3600 - (now - lastUsed)
 			timeLeft := formatCooldown(secondsLeft)
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽 /zraza",
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽_ /zraza_",
 				userName, timeLeft))
 		}
 
@@ -355,7 +355,7 @@ func main() {
 
 		total := getTotal(userID)
 		if total == 0 {
-			return sendToTopic(b, c, fmt.Sprintf("*%s*, ты серьезно?) У тя на балике 0... Можт похаваешь сначала?\n\n/zraza", userFirstName))
+			return sendToTopic(b, c, fmt.Sprintf("*%s*, ты серьезно?) У тя на балике 0... Можт похаваешь сначала?\n\n🍽_ /zraza_", userFirstName))
 		}
 		if total < amount {
 			diff := amount - total
