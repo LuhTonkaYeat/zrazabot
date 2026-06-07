@@ -386,7 +386,7 @@ func main() {
 			return err
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(400 * time.Millisecond)
 
 		for i := 0; i < 4; i++ {
 			animResults := []string{
@@ -396,7 +396,7 @@ func main() {
 			}
 			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(400 * time.Millisecond)
 		}
 
 		results := []string{
