@@ -487,6 +487,35 @@ func main() {
 		}
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
+
+		msg := c.Message()
+		chat := msg.Chat
+		topicID := msg.ThreadID
+
+		opt := &tele.SendOptions{
+			ParseMode:             tele.ModeMarkdown,
+			ThreadID:              topicID,
+			DisableWebPagePreview: true,
+		}
+
+		startMsg, err := b.Send(chat, "🔥 *ALL IN! Крутим барабаны...* 🔥", opt)
+		if err != nil {
+			return err
+		}
+
+		time.Sleep(400 * time.Millisecond)
+
+		for i := 0; i < 4; i++ {
+			animResults := []string{
+				slots[rand.Intn(len(slots))],
+				slots[rand.Intn(len(slots))],
+				slots[rand.Intn(len(slots))],
+			}
+			animDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", animResults[0], animResults[1], animResults[2])
+			b.Edit(startMsg, animDisplay, opt)
+			time.Sleep(400 * time.Millisecond)
+		}
+
 		results := []string{
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
@@ -515,14 +544,18 @@ func main() {
 
 		if multiplier > 0 {
 			addZrazy(userID, userFirstName, winAmount)
-			return sendToTopic(b, c, fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s! (x%d)\n\nТеперь на счету: %d %s",
+			message := fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s! (x%d)\n\n📊 Теперь на счету: %d %s",
 				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
 				winAmount, formatZrazyAccusative(winAmount), multiplier,
-				getTotal(userID), formatZrazyNominative(getTotal(userID))))
+				getTotal(userID), formatZrazyNominative(getTotal(userID)))
+			_, err := b.Edit(startMsg, message, opt)
+			return err
 		} else {
 			resetZrazy(userID)
-			return sendToTopic(b, c, fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nТеперь на счету: 0 зраз",
-				slotDisplay, userFirstName, total, formatZrazyGenitive(total)))
+			message := fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\n📊 Теперь на счету: 0 зраз",
+				slotDisplay, userFirstName, total, formatZrazyGenitive(total))
+			_, err := b.Edit(startMsg, message, opt)
+			return err
 		}
 	})
 
