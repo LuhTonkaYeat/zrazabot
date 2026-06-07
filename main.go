@@ -411,7 +411,10 @@ func main() {
 				winAmount = amount * multiplier
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			winAmount = amount
+			winAmount = amount * 3 / 2
+			if winAmount*2 < amount*3 {
+				winAmount++
+			}
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
@@ -426,8 +429,14 @@ func main() {
 			return err
 		} else if winAmount == amount {
 			addZrazy(userID, userFirstName, 0)
-			message := fmt.Sprintf("%s\n\n*%s* в ноле",
+			message := fmt.Sprintf("%s\n\n*%s* в нуле...",
 				slotDisplay, userFirstName)
+			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			return err
+		} else if winAmount > 0 && winAmount < amount {
+			addZrazy(userID, userFirstName, winAmount)
+			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x1.5)",
+				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount))
 			_, err := b.Edit(msg, message, tele.ModeMarkdown)
 			return err
 		} else {
