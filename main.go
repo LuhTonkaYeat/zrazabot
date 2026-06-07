@@ -460,6 +460,65 @@ func main() {
 		}
 	})
 
+	b.Handle("/all", func(c tele.Context) error {
+		userID := c.Sender().ID
+		userFirstName := c.Sender().FirstName
+
+		lastAll := getAllCooldown(userID)
+		now := time.Now().Unix()
+		if now-lastAll < 86400 && lastAll != 0 {
+			secondsLeft := 86400 - (now - lastAll)
+			hours := secondsLeft / 3600
+			minutes := (secondsLeft % 3600) / 60
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, аллын можно только раз в день_\n_Осталось ждать: %dч %dмин_",
+				userFirstName, hours, minutes))
+		}
+
+		total := getTotal(userID)
+		if total < 5 {
+			return sendToTopic(b, c, fmt.Sprintf("⚠️ _%s, для аллына нужно хотя бы 5 зраз... Накопи сначала_", userFirstName))
+		}
+
+		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
+		results := []string{
+			slots[rand.Intn(len(slots))],
+			slots[rand.Intn(len(slots))],
+			slots[rand.Intn(len(slots))],
+		}
+
+		multiplier := 0
+		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
+			multiplier = 10
+		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
+			multiplier = 7
+		} else if results[0] == results[1] && results[1] == results[2] {
+			if results[0] == "🍒" {
+				multiplier = 3
+			} else if results[0] == "🍋" || results[0] == "🍊" {
+				multiplier = 2
+			}
+		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
+			multiplier = 1
+		}
+
+		winAmount := total * multiplier
+
+		updateAllCooldown(userID, now)
+
+		slotDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", results[0], results[1], results[2])
+
+		if multiplier > 0 {
+			addZrazy(userID, userFirstName, winAmount)
+			return sendToTopic(b, c, fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s! (x%d)",
+				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
+				winAmount, formatZrazyAccusative(winAmount), multiplier))
+		} else {
+			resetZrazy(userID)
+			return sendToTopic(b, c, fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!",
+				slotDisplay, userFirstName, total, formatZrazyGenitive(total)))
+		}
+	})
+
 	log.Println("Бот запущен! Напиши /zraza в Telegram")
 	b.Start()
 }
@@ -718,6 +777,27 @@ func getLastUsed(userID int64) int64 {
 	return lastUsed
 }
 
+func getAllCooldown(userID int64) int64 {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return 0
+	}
+	defer db.Close()
+
+	var allCooldown int64
+	err = db.QueryRow("SELECT all_cooldown FROM users WHERE user_id = ?", userID).Scan(&allCooldown)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0
+		}
+		log.Println("DB error:", err)
+		return 0
+	}
+	return allCooldown
+}
+
 func updateLastUsed(userID int64, timestamp int64) {
 	dbPath := getDBPath()
 	db, err := sql.Open("sqlite", dbPath)
@@ -734,27 +814,6 @@ func updateLastUsed(userID int64, timestamp int64) {
 	if err != nil {
 		log.Println("DB error:", err)
 	}
-}
-
-func getStealCooldown(userID int64) int64 {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return 0
-	}
-	defer db.Close()
-
-	var stealCooldown int64
-	err = db.QueryRow("SELECT steal_cooldown FROM users WHERE user_id = ?", userID).Scan(&stealCooldown)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0
-		}
-		log.Println("DB error:", err)
-		return 0
-	}
-	return stealCooldown
 }
 
 func updateStealCooldown(userID int64, timestamp int64) {
@@ -787,6 +846,24 @@ func updateSlotCooldown(userID int64, timestamp int64) {
 	_, err = db.Exec(`
         INSERT INTO users (user_id, slot_cooldown) VALUES (?, ?)
         ON CONFLICT(user_id) DO UPDATE SET slot_cooldown = EXCLUDED.slot_cooldown
+    `, userID, timestamp)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func updateAllCooldown(userID int64, timestamp int64) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+        INSERT INTO users (user_id, all_cooldown) VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET all_cooldown = EXCLUDED.all_cooldown
     `, userID, timestamp)
 	if err != nil {
 		log.Println("DB error:", err)
@@ -893,6 +970,27 @@ func getShitLeaderboard(limit int) []userStats {
 	}
 
 	return users
+}
+
+func getStealCooldown(userID int64) int64 {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return 0
+	}
+	defer db.Close()
+
+	var stealCooldown int64
+	err = db.QueryRow("SELECT steal_cooldown FROM users WHERE user_id = ?", userID).Scan(&stealCooldown)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0
+		}
+		log.Println("DB error:", err)
+		return 0
+	}
+	return stealCooldown
 }
 
 func getLuckyLeaderboard(limit int) []userCountStats {
