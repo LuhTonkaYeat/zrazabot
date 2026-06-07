@@ -381,12 +381,14 @@ func main() {
 			DisableWebPagePreview: true,
 		}
 
-		startMsg, err := b.Send(chat, "🎰 *Крутим барабаны...* 🎰", opt)
+		startMsg, err := b.Send(chat, "🎰 *Лудка пошла...* 🎰", opt)
 		if err != nil {
 			return err
 		}
 
-		for i := 0; i < 10; i++ {
+		time.Sleep(500 * time.Millisecond)
+
+		for i := 0; i < 5; i++ {
 			animResults := []string{
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
@@ -394,7 +396,7 @@ func main() {
 			}
 			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(150 * time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
 		}
 
 		results := []string{
