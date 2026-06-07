@@ -423,6 +423,7 @@ func main() {
 				winAmount = amount * multiplier
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
+			multiplier = 2
 			winAmount = amount * 3 / 2
 			if winAmount*2 < amount*3 {
 				winAmount++
@@ -435,8 +436,14 @@ func main() {
 
 		if winAmount > amount {
 			addZrazy(userID, userFirstName, winAmount)
-			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x%d)",
-				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
+			var multiplierText string
+			if multiplier == 2 && winAmount == amount*3/2 {
+				multiplierText = " (x1.5)"
+			} else {
+				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+			}
+			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s",
+				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText)
 			_, err := b.Edit(startMsg, message, opt)
 			return err
 		} else if winAmount == amount {
@@ -457,65 +464,6 @@ func main() {
 				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
 			_, err := b.Edit(startMsg, message, opt)
 			return err
-		}
-	})
-
-	b.Handle("/all", func(c tele.Context) error {
-		userID := c.Sender().ID
-		userFirstName := c.Sender().FirstName
-
-		lastAll := getAllCooldown(userID)
-		now := time.Now().Unix()
-		if now-lastAll < 86400 && lastAll != 0 {
-			secondsLeft := 86400 - (now - lastAll)
-			hours := secondsLeft / 3600
-			minutes := (secondsLeft % 3600) / 60
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, аллын можно только раз в день_\n_Осталось ждать: %dч %dмин_",
-				userFirstName, hours, minutes))
-		}
-
-		total := getTotal(userID)
-		if total < 5 {
-			return sendToTopic(b, c, fmt.Sprintf("⚠️ _%s, для аллына нужно хотя бы 5 зраз... Накопи сначала_", userFirstName))
-		}
-
-		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
-		results := []string{
-			slots[rand.Intn(len(slots))],
-			slots[rand.Intn(len(slots))],
-			slots[rand.Intn(len(slots))],
-		}
-
-		multiplier := 0
-		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			multiplier = 10
-		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			multiplier = 7
-		} else if results[0] == results[1] && results[1] == results[2] {
-			if results[0] == "🍒" {
-				multiplier = 3
-			} else if results[0] == "🍋" || results[0] == "🍊" {
-				multiplier = 2
-			}
-		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			multiplier = 1
-		}
-
-		winAmount := total * multiplier
-
-		updateAllCooldown(userID, now)
-
-		slotDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", results[0], results[1], results[2])
-
-		if multiplier > 0 {
-			addZrazy(userID, userFirstName, winAmount)
-			return sendToTopic(b, c, fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s! (x%d)",
-				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
-				winAmount, formatZrazyAccusative(winAmount), multiplier))
-		} else {
-			resetZrazy(userID)
-			return sendToTopic(b, c, fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!",
-				slotDisplay, userFirstName, total, formatZrazyGenitive(total)))
 		}
 	})
 
