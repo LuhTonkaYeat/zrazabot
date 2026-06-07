@@ -393,37 +393,46 @@ func main() {
 			slots[rand.Intn(len(slots))],
 		}
 
+		var winAmount int
 		multiplier := 0
+
 		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
 			multiplier = 10
+			winAmount = amount * multiplier
 		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
 			multiplier = 7
+			winAmount = amount * multiplier
 		} else if results[0] == results[1] && results[1] == results[2] {
 			if results[0] == "🍒" {
 				multiplier = 3
-			} else if results[0] == "🍋" {
+				winAmount = amount * multiplier
+			} else if results[0] == "🍋" || results[0] == "🍊" {
 				multiplier = 2
-			} else if results[0] == "🍊" {
-				multiplier = 2
+				winAmount = amount * multiplier
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			multiplier = 1
+			winAmount = amount
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
 
 		updateSlotCooldown(userID, now)
-		winAmount := amount * multiplier
 
-		if winAmount > 0 {
+		if winAmount > amount {
 			addZrazy(userID, userFirstName, winAmount)
 			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x%d)",
 				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
 			_, err := b.Edit(msg, message, tele.ModeMarkdown)
 			return err
+		} else if winAmount == amount {
+			addZrazy(userID, userFirstName, 0)
+			message := fmt.Sprintf("%s\n\n*%s* в ноле",
+				slotDisplay, userFirstName)
+			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			return err
 		} else {
 			addZrazy(userID, userFirstName, -amount)
-			message := fmt.Sprintf("%s\n\n*%s* прoeбaл %d %s...",
+			message := fmt.Sprintf("%s\n\n*%s* проебал %d %s...",
 				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
 			_, err := b.Edit(msg, message, tele.ModeMarkdown)
 			return err
