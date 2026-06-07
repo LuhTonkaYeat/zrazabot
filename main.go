@@ -151,25 +151,24 @@ func main() {
 			incrementLuckyCount(userID)
 			updateLastUsed(userID, now)
 			garnish := garnishes[rand.Intn(len(garnishes))]
-			total := getTotal(userID)
-			return sendToTopic(b, c, fmt.Sprintf("_✨✨✨ ЧУДО! ЧЗХХХ!!!_\n*%s* _нашел заначку и сожрал 67 зраз с %s!!!_\n\n📊 _А всего он схавал - %d %s!_\n\n🍽 /zraza_",
-				userName, garnish, total, formatZrazyNominative(total)))
+			return sendToTopic(b, c, fmt.Sprintf("_✨✨✨ ЧУДО! ЧЗХХХ!!!_\n*%s* _нашел заначку и сожрал 67 eбaныx зраз с %s!!!_\n\n🍽_ /zraza_",
+				userName, garnish))
 		}
 
 		if rarity < 15 {
 			resetZrazy(userID)
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
-			return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽 Голоден? /zraza_",
+			return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽_ /zraza_",
 				userName))
 		}
 
-		eaten := rand.Intn(10) + 1
+		eaten := rand.Intn(20) + 1
 		garnish := garnishes[rand.Intn(len(garnishes))]
 		addZrazy(userID, userName, eaten)
 		updateLastUsed(userID, now)
 
-		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d %s и %s!!!_\n\n🍽 _Голоден? /zraza_",
+		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d eбaныx %s и %s!!!_\n\n🍽 _/zraza_",
 			userName, eaten, formatZrazyAccusative(eaten), garnish))
 	})
 
@@ -383,9 +382,9 @@ func main() {
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
 			}
-			animDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", animResults[0], animResults[1], animResults[2])
+			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(msg, animDisplay, tele.ModeMarkdown)
-			time.Sleep(80 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 
 		results := []string{
@@ -406,80 +405,28 @@ func main() {
 				multiplier = 2
 			} else if results[0] == "🍊" {
 				multiplier = 2
-			} else {
-				multiplier = 1
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
 			multiplier = 1
 		}
 
-		slotDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", results[0], results[1], results[2])
-
-		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
-			updateSlotCooldown(userID, now)
-			b.Edit(msg, fmt.Sprintf("%s\n\n_Ты проиграл, ноооо..! Выпал 💎! Ща будет додеп..._", slotDisplay), tele.ModeMarkdown)
-
-			time.Sleep(2 * time.Second)
-
-			newResults := []string{
-				slots[rand.Intn(len(slots))],
-				slots[rand.Intn(len(slots))],
-				slots[rand.Intn(len(slots))],
-			}
-
-			newSlotDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", newResults[0], newResults[1], newResults[2])
-
-			bonusMultiplier := 0
-			if newResults[0] == "💎" && newResults[1] == "💎" && newResults[2] == "💎" {
-				bonusMultiplier = 10
-			} else if newResults[0] == "7️⃣" && newResults[1] == "7️⃣" && newResults[2] == "7️⃣" {
-				bonusMultiplier = 7
-			} else if newResults[0] == newResults[1] && newResults[1] == newResults[2] {
-				if newResults[0] == "🍒" {
-					bonusMultiplier = 3
-				} else if newResults[0] == "🍋" {
-					bonusMultiplier = 2
-				} else if newResults[0] == "🍊" {
-					bonusMultiplier = 2
-				} else {
-					bonusMultiplier = 1
-				}
-			} else if newResults[0] == newResults[1] || newResults[1] == newResults[2] || newResults[0] == newResults[2] {
-				bonusMultiplier = 1
-			}
-
-			winAmount := amount * bonusMultiplier
-
-			if winAmount > 0 {
-				addZrazy(userID, userFirstName, winAmount)
-				resultMsg := fmt.Sprintf("%s\n\n*%s* выиграл %d %s в бонусном раунде! (коэф. x%d)",
-					newSlotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), bonusMultiplier)
-				b.Edit(msg, resultMsg, tele.ModeMarkdown)
-				return nil
-			} else {
-				addZrazy(userID, userFirstName, -amount)
-				resultMsg := fmt.Sprintf("%s\n\n*%s* проиграл %d %s в бонусном раунде... Анлак)",
-					newSlotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
-				b.Edit(msg, resultMsg, tele.ModeMarkdown)
-				return nil
-			}
-		}
+		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
 
 		updateSlotCooldown(userID, now)
 		winAmount := amount * multiplier
 
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
-			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (коэф. x%d)",
+			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x%d)",
 				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
-			b.Edit(msg, message, tele.ModeMarkdown)
-			return nil
+			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			return err
 		} else {
 			addZrazy(userID, userFirstName, -amount)
-			message := fmt.Sprintf("%s\n\n*%s* проиграл %d %s... Нууу в следующий раз повезёт)",
+			message := fmt.Sprintf("%s\n\n*%s* прoeбaл %d %s...",
 				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
-			b.Edit(msg, message, tele.ModeMarkdown)
-			return nil
+			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			return err
 		}
 	})
 
