@@ -561,21 +561,21 @@ func initDB() {
 	defer db.Close()
 
 	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS users (
-			user_id INTEGER PRIMARY KEY,
-			user_name TEXT DEFAULT '',
-			total INTEGER DEFAULT 0,
-			max_total INTEGER DEFAULT 0,
-			last_used INTEGER DEFAULT 0,
-			shit_total INTEGER DEFAULT 0,
-			steal_cooldown INTEGER DEFAULT 0,
-			slot_cooldown INTEGER DEFAULT 0,
-			lucky_count INTEGER DEFAULT 0,
-			steal_success INTEGER DEFAULT 0,
-			steal_fail INTEGER DEFAULT 0,
-			give_total INTEGER DEFAULT 0
-		)
-	`)
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            user_name TEXT DEFAULT '',
+            total INTEGER DEFAULT 0,
+            max_total INTEGER DEFAULT 0,
+            last_used INTEGER DEFAULT 0,
+            shit_total INTEGER DEFAULT 0,
+            steal_cooldown INTEGER DEFAULT 0,
+            slot_cooldown INTEGER DEFAULT 0,
+            all_cooldown INTEGER DEFAULT 0,
+            lucky_count INTEGER DEFAULT 0,
+            steal_success INTEGER DEFAULT 0,
+            give_total INTEGER DEFAULT 0
+        )
+    `)
 	if err != nil {
 		log.Fatal(err)
 	}
