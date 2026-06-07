@@ -400,7 +400,7 @@ func main() {
 
 		if multiplier == 0 && (results[0] == "💎" || results[1] == "💎" || results[2] == "💎") {
 			updateSlotCooldown(userID, now)
-			message := fmt.Sprintf("%s\n\n_Ты проиграл, ноооо..! Выпал 💎! Щас будет бонусный бросок..._", slotDisplay)
+			message := fmt.Sprintf("%s\n\n_Ты проиграл, ноооо..! Выпал 💎! Ща будет додеп..._", slotDisplay)
 			sendToTopic(b, c, message)
 
 			time.Sleep(2 * time.Second)
