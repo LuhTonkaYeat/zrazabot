@@ -371,7 +371,19 @@ func main() {
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
 
-		msg, err := b.Send(c.Chat(), "🎰 *Крутим барабаны...* 🎰", tele.ModeMarkdown)
+		// Получаем информацию о топике из сообщения
+		msg := c.Message()
+		chat := msg.Chat
+		topicID := msg.ThreadID
+
+		opt := &tele.SendOptions{
+			ParseMode:             tele.ModeMarkdown,
+			ThreadID:              topicID,
+			DisableWebPagePreview: true,
+		}
+
+		// Отправляем начальное сообщение в правильный топик
+		startMsg, err := b.Send(chat, "🎰 *Крутим барабаны...* 🎰", opt)
 		if err != nil {
 			return err
 		}
@@ -383,7 +395,7 @@ func main() {
 				slots[rand.Intn(len(slots))],
 			}
 			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
-			b.Edit(msg, animDisplay, tele.ModeMarkdown)
+			b.Edit(startMsg, animDisplay, opt)
 			time.Sleep(100 * time.Millisecond)
 		}
 
@@ -425,25 +437,25 @@ func main() {
 			addZrazy(userID, userFirstName, winAmount)
 			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x%d)",
 				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
-			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			_, err := b.Edit(startMsg, message, opt)
 			return err
 		} else if winAmount == amount {
 			addZrazy(userID, userFirstName, 0)
 			message := fmt.Sprintf("%s\n\n*%s* в нуле...",
 				slotDisplay, userFirstName)
-			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			_, err := b.Edit(startMsg, message, opt)
 			return err
 		} else if winAmount > 0 && winAmount < amount {
 			addZrazy(userID, userFirstName, winAmount)
 			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x1.5)",
 				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount))
-			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			_, err := b.Edit(startMsg, message, opt)
 			return err
 		} else {
 			addZrazy(userID, userFirstName, -amount)
 			message := fmt.Sprintf("%s\n\n*%s* проебал %d %s...",
 				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
-			_, err := b.Edit(msg, message, tele.ModeMarkdown)
+			_, err := b.Edit(startMsg, message, opt)
 			return err
 		}
 	})
