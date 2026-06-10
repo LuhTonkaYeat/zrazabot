@@ -137,8 +137,8 @@ func main() {
 
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
-		if now-lastUsed < 3600 && lastUsed != 0 {
-			secondsLeft := 3600 - (now - lastUsed)
+		if now-lastUsed < 600 && lastUsed != 0 {
+			secondsLeft := 600 - (now - lastUsed)
 			timeLeft := formatCooldown(secondsLeft)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽_ /zraza_",
 				userName, timeLeft))
@@ -364,8 +364,8 @@ func main() {
 
 		lastSlot := getSlotCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastSlot < 60 && lastSlot != 0 {
-			secondsLeft := 60 - (now - lastSlot)
+		if now-lastSlot < 30 && lastSlot != 0 {
+			secondsLeft := 30 - (now - lastSlot)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %d секунд_", userFirstName, secondsLeft))
 		}
 
@@ -386,9 +386,9 @@ func main() {
 			return err
 		}
 
-		time.Sleep(400 * time.Millisecond)
+		delays := []int{100, 100, 100, 100, 100, 150, 150, 200, 200, 250, 250, 300, 350, 400, 500}
 
-		for i := 0; i < 4; i++ {
+		for i := 0; i < 15; i++ {
 			animResults := []string{
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
@@ -396,7 +396,7 @@ func main() {
 			}
 			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(400 * time.Millisecond)
+			time.Sleep(time.Duration(delays[i]) * time.Millisecond)
 		}
 
 		results := []string{
@@ -433,6 +433,8 @@ func main() {
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
 
 		updateSlotCooldown(userID, now)
+
+		time.Sleep(500 * time.Millisecond)
 
 		if winAmount > amount {
 			addZrazy(userID, userFirstName, winAmount)
@@ -473,11 +475,11 @@ func main() {
 
 		lastAll := getAllCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastAll < 86400 && lastAll != 0 {
-			secondsLeft := 86400 - (now - lastAll)
+		if now-lastAll < 10800 && lastAll != 0 {
+			secondsLeft := 10800 - (now - lastAll)
 			hours := secondsLeft / 3600
 			minutes := (secondsLeft % 3600) / 60
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, аллын можно только раз в день_\n_Осталось ждать: %dч %dмин_",
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, аллын можно только раз в 3 часа_\n_Осталось ждать: %dч %dмин_",
 				userFirstName, hours, minutes))
 		}
 
@@ -503,17 +505,17 @@ func main() {
 			return err
 		}
 
-		time.Sleep(400 * time.Millisecond)
+		delays := []int{100, 100, 100, 100, 100, 150, 150, 200, 200, 250, 250, 300, 350, 400, 500}
 
-		for i := 0; i < 4; i++ {
+		for i := 0; i < 15; i++ {
 			animResults := []string{
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
 			}
-			animDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", animResults[0], animResults[1], animResults[2])
+			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(400 * time.Millisecond)
+			time.Sleep(time.Duration(delays[i]) * time.Millisecond)
 		}
 
 		results := []string{
@@ -538,9 +540,11 @@ func main() {
 		}
 
 		winAmount := total * multiplier
-		slotDisplay := fmt.Sprintf("🎰   %s | %s | %s   🎰", results[0], results[1], results[2])
+		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
 
 		updateAllCooldown(userID, now)
+
+		time.Sleep(500 * time.Millisecond)
 
 		if multiplier > 0 {
 			addZrazy(userID, userFirstName, winAmount)
