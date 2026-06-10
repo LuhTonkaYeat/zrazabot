@@ -159,6 +159,16 @@ func main() {
 			resetZrazy(userID)
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
+
+			// 20% шанс на бонус +50 зраз и сброс кулдаунов
+			if rand.Intn(100) < 20 {
+				addZrazy(userID, userName, 50)
+				resetSlotCooldown(userID)
+				resetAllCooldown(userID)
+				return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n✨ *БОНУС!* Ты получил 50 зраз за такое унижение! Кулдауны сброшены!\n\n🍽_ /zraza_",
+					userName))
+			}
+
 			return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽_ /zraza_",
 				userName))
 		}
@@ -406,28 +416,49 @@ func main() {
 		}
 
 		var winAmount int
-		var resultType string
+		var multiplier int
+		var multiplierText string
 
 		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			winAmount = amount * 10
-			resultType = "win"
+			multiplier = 10
+			winAmount = amount * multiplier
+			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			winAmount = amount * 7
-			resultType = "win"
+			multiplier = 7
+			winAmount = amount * multiplier
+			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 		} else if results[0] == results[1] && results[1] == results[2] {
 			if results[0] == "🍒" {
-				winAmount = amount * 3
-				resultType = "win"
+				multiplier = 3
+				winAmount = amount * multiplier
+				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 			} else if results[0] == "🍋" || results[0] == "🍊" {
-				winAmount = amount * 2
-				resultType = "win"
+				multiplier = 2
+				winAmount = amount * multiplier
+				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			winAmount = amount
-			resultType = "draw"
+			if rand.Intn(100) < 55 {
+				winAmount = amount * 3 / 2
+				if winAmount*2 < amount*3 {
+					winAmount++
+				}
+				multiplierText = " (x1.5)"
+			} else {
+				winAmount = 0
+				multiplierText = ""
+			}
 		} else {
-			winAmount = 0
-			resultType = "lose"
+			if rand.Intn(100) < 45 {
+				winAmount = amount * 6 / 5
+				if winAmount*5 < amount*6 {
+					winAmount++
+				}
+				multiplierText = " (x1.2)"
+			} else {
+				winAmount = 0
+				multiplierText = ""
+			}
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
@@ -436,17 +467,10 @@ func main() {
 
 		time.Sleep(500 * time.Millisecond)
 
-		if resultType == "win" {
+		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
-			multiplier := winAmount / amount
-			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x%d)",
-				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
-			_, err := b.Edit(startMsg, message, opt)
-			return err
-		} else if resultType == "draw" {
-			addZrazy(userID, userFirstName, 0)
-			message := fmt.Sprintf("%s\n\n*%s* в нуле...",
-				slotDisplay, userFirstName)
+			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s",
+				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText)
 			_, err := b.Edit(startMsg, message, opt)
 			return err
 		} else {
@@ -514,28 +538,35 @@ func main() {
 		}
 
 		var winAmount int
-		var resultType string
+		var multiplier int
+		var multiplierText string
 
 		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			winAmount = total * 10
-			resultType = "win"
+			multiplier = 10
+			winAmount = total * multiplier
+			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			winAmount = total * 7
-			resultType = "win"
+			multiplier = 7
+			winAmount = total * multiplier
+			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 		} else if results[0] == results[1] && results[1] == results[2] {
 			if results[0] == "🍒" {
-				winAmount = total * 3
-				resultType = "win"
+				multiplier = 3
+				winAmount = total * multiplier
+				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 			} else if results[0] == "🍋" || results[0] == "🍊" {
-				winAmount = total * 2
-				resultType = "win"
+				multiplier = 2
+				winAmount = total * multiplier
+				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
 			}
-		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			winAmount = total
-			resultType = "draw"
 		} else {
-			winAmount = 0
-			resultType = "lose"
+			if rand.Intn(100) < 55 {
+				winAmount = total * 2
+				multiplierText = " (x2)"
+			} else {
+				winAmount = 0
+				multiplierText = ""
+			}
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
@@ -544,19 +575,11 @@ func main() {
 
 		time.Sleep(500 * time.Millisecond)
 
-		if resultType == "win" {
+		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
-			multiplier := winAmount / total
-			message := fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s! (x%d)\n\n📊 Теперь на счету: %d %s",
+			message := fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s!%s\n\n📊 Теперь на счету: %d %s",
 				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
-				winAmount, formatZrazyAccusative(winAmount), multiplier,
-				getTotal(userID), formatZrazyNominative(getTotal(userID)))
-			_, err := b.Edit(startMsg, message, opt)
-			return err
-		} else if resultType == "draw" {
-			addZrazy(userID, userFirstName, 0)
-			message := fmt.Sprintf("%s\n\n🔄 *ALL IN!* 🔄\n*%s* поставил всё (%d %s) и остался при своих!\n\n📊 Теперь на счету: %d %s",
-				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
+				winAmount, formatZrazyAccusative(winAmount), multiplierText,
 				getTotal(userID), formatZrazyNominative(getTotal(userID)))
 			_, err := b.Edit(startMsg, message, opt)
 			return err
@@ -667,6 +690,36 @@ func resetZrazy(userID int64) {
 	_, err = db.Exec(`
 		UPDATE users SET total = 0 WHERE user_id = ?
 	`, userID)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func resetSlotCooldown(userID int64) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`UPDATE users SET slot_cooldown = 0 WHERE user_id = ?`, userID)
+	if err != nil {
+		log.Println("DB error:", err)
+	}
+}
+
+func resetAllCooldown(userID int64) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`UPDATE users SET all_cooldown = 0 WHERE user_id = ?`, userID)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
