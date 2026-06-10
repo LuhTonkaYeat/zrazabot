@@ -396,10 +396,8 @@ func main() {
 			return err
 		}
 
-		delays := []int{100, 100, 100, 100, 100, 150, 150, 200, 200, 250, 250, 300, 350, 400, 500}
-		var finalResults []string
-
-		for i := 0; i < 15; i++ {
+		// Анимация — просто для красоты, результат будет сгенерирован отдельно
+		for i := 0; i < 10; i++ {
 			animResults := []string{
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
@@ -407,13 +405,15 @@ func main() {
 			}
 			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(time.Duration(delays[i]) * time.Millisecond)
-			if i == 14 {
-				finalResults = animResults
-			}
+			time.Sleep(150 * time.Millisecond)
 		}
 
-		results := finalResults
+		// Финальный результат генерируется по правилам
+		results := []string{
+			slots[rand.Intn(len(slots))],
+			slots[rand.Intn(len(slots))],
+			slots[rand.Intn(len(slots))],
+		}
 
 		var winAmount int
 		var multiplier int
@@ -518,10 +518,7 @@ func main() {
 			return err
 		}
 
-		delays := []int{100, 100, 100, 100, 100, 150, 150, 200, 200, 250, 250, 300, 350, 400, 500}
-		var finalResults []string
-
-		for i := 0; i < 15; i++ {
+		for i := 0; i < 10; i++ {
 			animResults := []string{
 				slots[rand.Intn(len(slots))],
 				slots[rand.Intn(len(slots))],
@@ -529,13 +526,14 @@ func main() {
 			}
 			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(time.Duration(delays[i]) * time.Millisecond)
-			if i == 14 {
-				finalResults = animResults
-			}
+			time.Sleep(150 * time.Millisecond)
 		}
 
-		results := finalResults
+		results := []string{
+			slots[rand.Intn(len(slots))],
+			slots[rand.Intn(len(slots))],
+			slots[rand.Intn(len(slots))],
+		}
 
 		var winAmount int
 		var multiplier int
