@@ -155,7 +155,7 @@ func main() {
 				userName, garnish))
 		}
 
-		if rarity < 15 {
+		if rarity < 10 {
 			resetZrazy(userID)
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
@@ -317,7 +317,7 @@ func main() {
 
 		amount, err := parseAmount(args[0])
 		if err != nil {
-			return sendToTopic(b, c, "❌ *Ошибка отправки:* Надо целое положительное число зраз для подарка")
+			return sendToTopic(b, c, "❌ *Ошибка:* Надо целое положительное число зраз для подарка")
 		}
 
 		targetUserID := msg.ReplyTo.Sender.ID
@@ -350,7 +350,7 @@ func main() {
 
 		amount, err := parseAmount(args[0])
 		if err != nil || amount > 10 {
-			return sendToTopic(b, c, "_❌ *Ошибка отправки:* Надо целое положительное число зраз, <= 10 для ставки. Иначе ты слудоманишься хах_")
+			return sendToTopic(b, c, "_❌ *Ошибка:* Надо целое положительное число зраз, <= 10 для ставки. Иначе ты слудоманишься хах_")
 		}
 
 		total := getTotal(userID)
@@ -381,7 +381,7 @@ func main() {
 			DisableWebPagePreview: true,
 		}
 
-		startMsg, err := b.Send(chat, "🎰 *Крутим барабаны...* 🎰", opt)
+		startMsg, err := b.Send(chat, "🎰 *Поехали...* 🎰", opt)
 		if err != nil {
 			return err
 		}
@@ -406,28 +406,28 @@ func main() {
 		}
 
 		var winAmount int
-		multiplier := 0
+		var resultType string
 
 		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			multiplier = 10
-			winAmount = amount * multiplier
+			winAmount = amount * 10
+			resultType = "win"
 		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			multiplier = 7
-			winAmount = amount * multiplier
+			winAmount = amount * 7
+			resultType = "win"
 		} else if results[0] == results[1] && results[1] == results[2] {
 			if results[0] == "🍒" {
-				multiplier = 3
-				winAmount = amount * multiplier
+				winAmount = amount * 3
+				resultType = "win"
 			} else if results[0] == "🍋" || results[0] == "🍊" {
-				multiplier = 2
-				winAmount = amount * multiplier
+				winAmount = amount * 2
+				resultType = "win"
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			multiplier = 2
-			winAmount = amount * 3 / 2
-			if winAmount*2 < amount*3 {
-				winAmount++
-			}
+			winAmount = amount
+			resultType = "draw"
+		} else {
+			winAmount = 0
+			resultType = "lose"
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
@@ -436,28 +436,17 @@ func main() {
 
 		time.Sleep(500 * time.Millisecond)
 
-		if winAmount > amount {
+		if resultType == "win" {
 			addZrazy(userID, userFirstName, winAmount)
-			var multiplierText string
-			if multiplier == 2 && winAmount == amount*3/2 {
-				multiplierText = " (x1.5)"
-			} else {
-				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
-			}
-			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s",
-				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText)
+			multiplier := winAmount / amount
+			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x%d)",
+				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplier)
 			_, err := b.Edit(startMsg, message, opt)
 			return err
-		} else if winAmount == amount {
+		} else if resultType == "draw" {
 			addZrazy(userID, userFirstName, 0)
 			message := fmt.Sprintf("%s\n\n*%s* в нуле...",
 				slotDisplay, userFirstName)
-			_, err := b.Edit(startMsg, message, opt)
-			return err
-		} else if winAmount > 0 && winAmount < amount {
-			addZrazy(userID, userFirstName, winAmount)
-			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s! (x1.5)",
-				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount))
 			_, err := b.Edit(startMsg, message, opt)
 			return err
 		} else {
@@ -479,7 +468,7 @@ func main() {
 			secondsLeft := 10800 - (now - lastAll)
 			hours := secondsLeft / 3600
 			minutes := (secondsLeft % 3600) / 60
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, аллын можно только раз в 3 часа_\n_Осталось ждать: %dч %dмин_",
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, all in можно делать только раз в 3 часа_\n_Осталось ждать: %dч %dмин_",
 				userFirstName, hours, minutes))
 		}
 
@@ -500,7 +489,7 @@ func main() {
 			DisableWebPagePreview: true,
 		}
 
-		startMsg, err := b.Send(chat, "🔥 *ALL IN! Крутим барабаны...* 🔥", opt)
+		startMsg, err := b.Send(chat, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", opt)
 		if err != nil {
 			return err
 		}
@@ -524,39 +513,56 @@ func main() {
 			slots[rand.Intn(len(slots))],
 		}
 
-		multiplier := 0
+		var winAmount int
+		var resultType string
+
 		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			multiplier = 10
+			winAmount = total * 10
+			resultType = "win"
 		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			multiplier = 7
+			winAmount = total * 7
+			resultType = "win"
 		} else if results[0] == results[1] && results[1] == results[2] {
 			if results[0] == "🍒" {
-				multiplier = 3
+				winAmount = total * 3
+				resultType = "win"
 			} else if results[0] == "🍋" || results[0] == "🍊" {
-				multiplier = 2
+				winAmount = total * 2
+				resultType = "win"
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			multiplier = 1
+			winAmount = total
+			resultType = "draw"
+		} else {
+			winAmount = 0
+			resultType = "lose"
 		}
 
-		winAmount := total * multiplier
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
 
 		updateAllCooldown(userID, now)
 
 		time.Sleep(500 * time.Millisecond)
 
-		if multiplier > 0 {
+		if resultType == "win" {
 			addZrazy(userID, userFirstName, winAmount)
+			multiplier := winAmount / total
 			message := fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s! (x%d)\n\n📊 Теперь на счету: %d %s",
 				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
 				winAmount, formatZrazyAccusative(winAmount), multiplier,
 				getTotal(userID), formatZrazyNominative(getTotal(userID)))
 			_, err := b.Edit(startMsg, message, opt)
 			return err
+		} else if resultType == "draw" {
+			addZrazy(userID, userFirstName, 0)
+			message := fmt.Sprintf("%s\n\n🔄 *ALL IN!* 🔄\n*%s* поставил всё (%d %s) и остался при своих!\n\n📊 Теперь на счету: %d %s",
+				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
+				getTotal(userID), formatZrazyNominative(getTotal(userID)))
+			_, err := b.Edit(startMsg, message, opt)
+			return err
 		} else {
 			resetZrazy(userID)
-			message := fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\n📊 Теперь на счету: 0 зраз",
+			message := fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nЛУДИК EБAHЫЙ!!!\n\n📊 Теперь на счету: 0 зраз",
 				slotDisplay, userFirstName, total, formatZrazyGenitive(total))
 			_, err := b.Edit(startMsg, message, opt)
 			return err
