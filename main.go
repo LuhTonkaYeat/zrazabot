@@ -123,7 +123,7 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, slotSymbols [
 		return nil, err
 	}
 
-	delays := []int{250, 350, 500, 700, 1000}
+	delays := []int{300, 450, 650, 900}
 
 	for i, delay := range delays {
 		time.Sleep(time.Duration(delay) * time.Millisecond)
@@ -135,11 +135,11 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, slotSymbols [
 		}
 		animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 
-		_, _ = b.Edit(startMsg, animDisplay, opt)
-
 		if i == len(delays)-1 {
 			break
 		}
+
+		_, _ = b.Edit(startMsg, animDisplay, opt)
 	}
 
 	return startMsg, nil
@@ -388,12 +388,12 @@ func main() {
 		args := c.Args()
 
 		if len(args) < 1 {
-			return sendToTopic(b, c, "🎰 *Гемблинг*\n\n💎 *Слоты - как юзать?*\n_Просто напиши:\n'/slot [ставка (≤10)]'_")
+			return sendToTopic(b, c, "🎰 *Гемблинг*\n\n💎 *Слоты - как юзать?*\n_Просто напиши:\n'/slot [ставка (≤50)]'_")
 		}
 
 		amount, err := parseAmount(args[0])
-		if err != nil || amount > 10 {
-			return sendToTopic(b, c, "_❌ *Ошибка:* Надо целое положительное число зраз, <= 10 для ставки. Иначе ты слудоманишься хах_")
+		if err != nil || amount > 50 {
+			return sendToTopic(b, c, "_❌ *Ошибка:* Надо целое положительное число зраз, <= 50 для ставки. Иначе ты слудоманишься хах_")
 		}
 
 		total := getTotal(userID)
