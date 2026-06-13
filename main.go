@@ -123,15 +123,8 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		return nil, err
 	}
 
-	delays := []int{1200, 1200, 1200}
-
-	for i, delay := range delays {
-		time.Sleep(time.Duration(delay) * time.Millisecond)
-
-		if i == len(delays)-1 {
-			_, _ = b.Edit(startMsg, finalText, opt)
-			break
-		}
+	for i := 0; i < 5; i++ {
+		time.Sleep(200 * time.Millisecond)
 
 		animResults := []string{
 			slotSymbols[rand.Intn(len(slotSymbols))],
@@ -143,7 +136,32 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		_, _ = b.Edit(startMsg, animDisplay, opt)
 	}
 
-	return startMsg, nil
+	time.Sleep(200 * time.Millisecond)
+	_, err = b.Edit(startMsg, finalText, opt)
+
+	return startMsg, err
+}
+
+func migrateDB(db *sql.DB) {
+	columnsToAdd := []string{
+		"ALTER TABLE users ADD COLUMN all_cooldown INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN steal_cooldown INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN slot_cooldown INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN lucky_count INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN steal_success INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN steal_fail INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN give_total INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN max_total INTEGER DEFAULT 0",
+		"ALTER TABLE users ADD COLUMN shit_total INTEGER DEFAULT 0",
+	}
+
+	for _, query := range columnsToAdd {
+		_, err := db.Exec(query)
+		if err != nil {
+			// Игнорируем ошибки "duplicate column name", так как это означает, что колонка уже есть
+			continue
+		}
+	}
 }
 
 func main() {
@@ -164,7 +182,26 @@ func main() {
 		log.Fatal(err)
 	}
 
-	initDB()
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            user_name TEXT DEFAULT '',
+            total INTEGER DEFAULT 0,
+            last_used INTEGER DEFAULT 0
+        )
+    `)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	migrateDB(db)
 
 	b.Handle("/zraza", func(c tele.Context) error {
 		userID := c.Sender().ID
@@ -586,33 +623,7 @@ func parseAmount(s string) (int, error) {
 }
 
 func initDB() {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            user_name TEXT DEFAULT '',
-            total INTEGER DEFAULT 0,
-            max_total INTEGER DEFAULT 0,
-            last_used INTEGER DEFAULT 0,
-            shit_total INTEGER DEFAULT 0,
-            steal_cooldown INTEGER DEFAULT 0,
-            slot_cooldown INTEGER DEFAULT 0,
-            all_cooldown INTEGER DEFAULT 0,
-            lucky_count INTEGER DEFAULT 0,
-            steal_success INTEGER DEFAULT 0,
-            steal_fail INTEGER DEFAULT 0,
-            give_total INTEGER DEFAULT 0
-        )
-    `)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Эта функция теперь пуста, так как инициализация перенесена в main для миграции
 }
 
 func addZrazy(userID int64, userName string, amount int) {
