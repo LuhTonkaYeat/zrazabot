@@ -111,7 +111,7 @@ func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
 	return err
 }
 
-func animateSlots(b *tele.Bot, c tele.Context, initialText string, slotSymbols []string) (*tele.Message, error) {
+func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText string, slotSymbols []string) (*tele.Message, error) {
 	msg := c.Message()
 	opt := &tele.SendOptions{
 		ParseMode: tele.ModeMarkdown,
@@ -123,10 +123,15 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, slotSymbols [
 		return nil, err
 	}
 
-	delays := []int{300, 450, 650, 900}
+	delays := []int{1200, 1200, 1200}
 
 	for i, delay := range delays {
 		time.Sleep(time.Duration(delay) * time.Millisecond)
+
+		if i == len(delays)-1 {
+			_, _ = b.Edit(startMsg, finalText, opt)
+			break
+		}
 
 		animResults := []string{
 			slotSymbols[rand.Intn(len(slotSymbols))],
@@ -134,10 +139,6 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, slotSymbols [
 			slotSymbols[rand.Intn(len(slotSymbols))],
 		}
 		animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
-
-		if i == len(delays)-1 {
-			break
-		}
 
 		_, _ = b.Edit(startMsg, animDisplay, opt)
 	}
@@ -414,11 +415,6 @@ func main() {
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
 
-		startMsg, err := animateSlots(b, c, "🎰 *Поехали...* 🎰", slots)
-		if err != nil {
-			return err
-		}
-
 		results := []string{
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
@@ -461,28 +457,25 @@ func main() {
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
-		updateSlotCooldown(userID, now)
 
-		time.Sleep(500 * time.Millisecond)
-
-		opt := &tele.SendOptions{
-			ParseMode: tele.ModeMarkdown,
-			ThreadID:  c.Message().ThreadID,
+		var finalMessage string
+		if winAmount > 0 {
+			finalMessage = fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s",
+				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText)
+		} else {
+			finalMessage = fmt.Sprintf("%s\n\n*%s* проебал %d %s...",
+				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
 		}
 
+		updateSlotCooldown(userID, now)
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
-			message := fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s",
-				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText)
-			_, err := b.Edit(startMsg, message, opt)
-			return err
 		} else {
 			addZrazy(userID, userFirstName, -amount)
-			message := fmt.Sprintf("%s\n\n*%s* проебал %d %s...",
-				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
-			_, err := b.Edit(startMsg, message, opt)
-			return err
 		}
+
+		_, err = animateSlots(b, c, "🎰 *Поехали...* 🎰", finalMessage, slots)
+		return err
 	})
 
 	b.Handle("/all", func(c tele.Context) error {
@@ -493,10 +486,9 @@ func main() {
 		now := time.Now().Unix()
 		if now-lastAll < 10800 && lastAll != 0 {
 			secondsLeft := 10800 - (now - lastAll)
-			hours := secondsLeft / 3600
-			minutes := (secondsLeft % 3600) / 60
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, all in можно делать только раз в 3 часа_\n_Осталось ждать: %dч %dмин_",
-				userFirstName, hours, minutes))
+			timeLeft := formatCooldown(secondsLeft)
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, all in можно делать только раз в 3 часа_\n_Осталось ждать: %s_",
+				userFirstName, timeLeft))
 		}
 
 		total := getTotal(userID)
@@ -505,11 +497,6 @@ func main() {
 		}
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
-
-		startMsg, err := animateSlots(b, c, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", slots)
-		if err != nil {
-			return err
-		}
 
 		results := []string{
 			slots[rand.Intn(len(slots))],
@@ -542,30 +529,27 @@ func main() {
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
-		updateAllCooldown(userID, now)
 
-		time.Sleep(500 * time.Millisecond)
-
-		opt := &tele.SendOptions{
-			ParseMode: tele.ModeMarkdown,
-			ThreadID:  c.Message().ThreadID,
-		}
-
+		var finalMessage string
 		if winAmount > 0 {
-			addZrazy(userID, userFirstName, winAmount)
-			message := fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s!%s\n\n📊 Теперь на счету: %d %s",
+			finalMessage = fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s!%s\n\n📊 Теперь на счету: %d %s",
 				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
 				winAmount, formatZrazyAccusative(winAmount), multiplierText,
-				getTotal(userID), formatZrazyNominative(getTotal(userID)))
-			_, err := b.Edit(startMsg, message, opt)
-			return err
+				total+winAmount, formatZrazyNominative(total+winAmount))
+		} else {
+			finalMessage = fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nЛУДИК EБAHЫЙ!!!\n\n📊 Теперь на счету: 0 зраз",
+				slotDisplay, userFirstName, total, formatZrazyGenitive(total))
+		}
+
+		updateAllCooldown(userID, now)
+		if winAmount > 0 {
+			addZrazy(userID, userFirstName, winAmount)
 		} else {
 			resetZrazy(userID)
-			message := fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nЛУДИК EБAHЫЙ!!!\n\n📊 Теперь на счету: 0 зраз",
-				slotDisplay, userFirstName, total, formatZrazyGenitive(total))
-			_, err := b.Edit(startMsg, message, opt)
-			return err
 		}
+
+		_, err := animateSlots(b, c, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", finalMessage, slots)
+		return err
 	})
 
 	log.Println("Бот запущен! Напиши /zraza в Telegram")
