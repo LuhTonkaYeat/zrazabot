@@ -111,6 +111,40 @@ func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
 	return err
 }
 
+func animateSlots(b *tele.Bot, c tele.Context, initialText string, slotSymbols []string) (*tele.Message, error) {
+	msg := c.Message()
+	opt := &tele.SendOptions{
+		ParseMode: tele.ModeMarkdown,
+		ThreadID:  msg.ThreadID,
+	}
+
+	startMsg, err := b.Send(msg.Chat, initialText, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	delays := []int{250, 350, 500, 700, 1000}
+
+	for i, delay := range delays {
+		time.Sleep(time.Duration(delay) * time.Millisecond)
+
+		animResults := []string{
+			slotSymbols[rand.Intn(len(slotSymbols))],
+			slotSymbols[rand.Intn(len(slotSymbols))],
+			slotSymbols[rand.Intn(len(slotSymbols))],
+		}
+		animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
+
+		_, _ = b.Edit(startMsg, animDisplay, opt)
+
+		if i == len(delays)-1 {
+			break
+		}
+	}
+
+	return startMsg, nil
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -160,7 +194,6 @@ func main() {
 			addShit(userID, userName, 1)
 			updateLastUsed(userID, now)
 
-			// 20% шанс на бонус +50 зраз и сброс кулдаунов
 			if rand.Intn(100) < 20 {
 				addZrazy(userID, userName, 50)
 				resetSlotCooldown(userID)
@@ -374,41 +407,18 @@ func main() {
 
 		lastSlot := getSlotCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastSlot < 30 && lastSlot != 0 {
-			secondsLeft := 30 - (now - lastSlot)
+		if now-lastSlot < 60 && lastSlot != 0 {
+			secondsLeft := 60 - (now - lastSlot)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %d секунд_", userFirstName, secondsLeft))
 		}
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
 
-		msg := c.Message()
-		chat := msg.Chat
-		topicID := msg.ThreadID
-
-		opt := &tele.SendOptions{
-			ParseMode:             tele.ModeMarkdown,
-			ThreadID:              topicID,
-			DisableWebPagePreview: true,
-		}
-
-		startMsg, err := b.Send(chat, "🎰 *Поехали...* 🎰", opt)
+		startMsg, err := animateSlots(b, c, "🎰 *Поехали...* 🎰", slots)
 		if err != nil {
 			return err
 		}
 
-		// Анимация — просто для красоты, результат будет сгенерирован отдельно
-		for i := 0; i < 10; i++ {
-			animResults := []string{
-				slots[rand.Intn(len(slots))],
-				slots[rand.Intn(len(slots))],
-				slots[rand.Intn(len(slots))],
-			}
-			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
-			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(150 * time.Millisecond)
-		}
-
-		// Финальный результат генерируется по правилам
 		results := []string{
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
@@ -416,26 +426,21 @@ func main() {
 		}
 
 		var winAmount int
-		var multiplier int
 		var multiplierText string
 
 		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			multiplier = 10
-			winAmount = amount * multiplier
-			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+			winAmount = amount * 10
+			multiplierText = " (x10)"
 		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			multiplier = 7
-			winAmount = amount * multiplier
-			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+			winAmount = amount * 7
+			multiplierText = " (x7)"
 		} else if results[0] == results[1] && results[1] == results[2] {
 			if results[0] == "🍒" {
-				multiplier = 3
-				winAmount = amount * multiplier
-				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+				winAmount = amount * 3
+				multiplierText = " (x3)"
 			} else if results[0] == "🍋" || results[0] == "🍊" {
-				multiplier = 2
-				winAmount = amount * multiplier
-				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+				winAmount = amount * 2
+				multiplierText = " (x2)"
 			}
 		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
 			if rand.Intn(100) < 55 {
@@ -444,9 +449,6 @@ func main() {
 					winAmount++
 				}
 				multiplierText = " (x1.5)"
-			} else {
-				winAmount = 0
-				multiplierText = ""
 			}
 		} else {
 			if rand.Intn(100) < 45 {
@@ -455,17 +457,18 @@ func main() {
 					winAmount++
 				}
 				multiplierText = " (x1.2)"
-			} else {
-				winAmount = 0
-				multiplierText = ""
 			}
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
-
 		updateSlotCooldown(userID, now)
 
 		time.Sleep(500 * time.Millisecond)
+
+		opt := &tele.SendOptions{
+			ParseMode: tele.ModeMarkdown,
+			ThreadID:  c.Message().ThreadID,
+		}
 
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
@@ -503,30 +506,9 @@ func main() {
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
 
-		msg := c.Message()
-		chat := msg.Chat
-		topicID := msg.ThreadID
-
-		opt := &tele.SendOptions{
-			ParseMode:             tele.ModeMarkdown,
-			ThreadID:              topicID,
-			DisableWebPagePreview: true,
-		}
-
-		startMsg, err := b.Send(chat, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", opt)
+		startMsg, err := animateSlots(b, c, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", slots)
 		if err != nil {
 			return err
-		}
-
-		for i := 0; i < 10; i++ {
-			animResults := []string{
-				slots[rand.Intn(len(slots))],
-				slots[rand.Intn(len(slots))],
-				slots[rand.Intn(len(slots))],
-			}
-			animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
-			b.Edit(startMsg, animDisplay, opt)
-			time.Sleep(150 * time.Millisecond)
 		}
 
 		results := []string{
@@ -536,42 +518,38 @@ func main() {
 		}
 
 		var winAmount int
-		var multiplier int
 		var multiplierText string
 
 		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			multiplier = 10
-			winAmount = total * multiplier
-			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+			winAmount = total * 10
+			multiplierText = " (x10)"
 		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			multiplier = 7
-			winAmount = total * multiplier
-			multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+			winAmount = total * 7
+			multiplierText = " (x7)"
 		} else if results[0] == results[1] && results[1] == results[2] {
 			if results[0] == "🍒" {
-				multiplier = 3
-				winAmount = total * multiplier
-				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+				winAmount = total * 3
+				multiplierText = " (x3)"
 			} else if results[0] == "🍋" || results[0] == "🍊" {
-				multiplier = 2
-				winAmount = total * multiplier
-				multiplierText = fmt.Sprintf(" (x%d)", multiplier)
+				winAmount = total * 2
+				multiplierText = " (x2)"
 			}
 		} else {
 			if rand.Intn(100) < 55 {
 				winAmount = total * 2
 				multiplierText = " (x2)"
-			} else {
-				winAmount = 0
-				multiplierText = ""
 			}
 		}
 
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
-
 		updateAllCooldown(userID, now)
 
 		time.Sleep(500 * time.Millisecond)
+
+		opt := &tele.SendOptions{
+			ParseMode: tele.ModeMarkdown,
+			ThreadID:  c.Message().ThreadID,
+		}
 
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
@@ -644,6 +622,7 @@ func initDB() {
             all_cooldown INTEGER DEFAULT 0,
             lucky_count INTEGER DEFAULT 0,
             steal_success INTEGER DEFAULT 0,
+            steal_fail INTEGER DEFAULT 0,
             give_total INTEGER DEFAULT 0
         )
     `)
@@ -834,27 +813,6 @@ func getTotal(userID int64) int {
 		return 0
 	}
 	return total
-}
-
-func getShitTotal(userID int64) int {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return 0
-	}
-	defer db.Close()
-
-	var shitTotal int
-	err = db.QueryRow("SELECT shit_total FROM users WHERE user_id = ?", userID).Scan(&shitTotal)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0
-		}
-		log.Println("DB error:", err)
-		return 0
-	}
-	return shitTotal
 }
 
 func getLastUsed(userID int64) int64 {
