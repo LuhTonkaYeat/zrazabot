@@ -159,21 +159,8 @@ func calculateSlotWin(results []string, betAmount int) (int, string) {
 	}
 
 	if r1 == r2 || r2 == r3 || r1 == r3 {
-		if rand.Intn(100) < 55 {
-			win := betAmount * 3 / 2
-			if win*2 < betAmount*3 {
-				win++
-			}
-			return win, " (x1.5)"
-		}
-	} else {
-		if rand.Intn(100) < 45 {
-			win := betAmount * 6 / 5
-			if win*5 < betAmount*6 {
-				win++
-			}
-			return win, " (x1.2)"
-		}
+		win := int(float64(betAmount) * 1.3)
+		return win, " (x1.3)"
 	}
 
 	return 0, ""
