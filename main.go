@@ -124,7 +124,7 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 	}
 
 	for i := 0; i < 3; i++ {
-		time.Sleep(600 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 
 		animResults := []string{
 			slotSymbols[rand.Intn(len(slotSymbols))],
@@ -136,7 +136,7 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		_, _ = b.Edit(startMsg, displayText, opt)
 	}
 
-	time.Sleep(600 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	_, err = b.Edit(startMsg, finalText, opt)
 	return startMsg, err
