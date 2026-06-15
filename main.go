@@ -123,26 +123,66 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		return nil, err
 	}
 
-	totalFrames := 4
-	for i := 0; i < totalFrames; i++ {
-		time.Sleep(500 * time.Millisecond)
+	// Делаем 3 кадра анимации "вращения"
+	for i := 0; i < 3; i++ {
+		time.Sleep(600 * time.Millisecond)
 
-		var displayText string
-		if i == totalFrames-1 {
-			displayText = finalText
-		} else {
-			animResults := []string{
-				slotSymbols[rand.Intn(len(slotSymbols))],
-				slotSymbols[rand.Intn(len(slotSymbols))],
-				slotSymbols[rand.Intn(len(slotSymbols))],
-			}
-			displayText = fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
+		animResults := []string{
+			slotSymbols[rand.Intn(len(slotSymbols))],
+			slotSymbols[rand.Intn(len(slotSymbols))],
+			slotSymbols[rand.Intn(len(slotSymbols))],
 		}
+		displayText := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 
 		_, _ = b.Edit(startMsg, displayText, opt)
 	}
 
-	return startMsg, nil
+	// Финальная пауза перед результатом
+	time.Sleep(600 * time.Millisecond)
+
+	// Четкий финальный кадр с результатом
+	_, err = b.Edit(startMsg, finalText, opt)
+	return startMsg, err
+}
+
+func calculateSlotWin(results []string, betAmount int) (int, string) {
+	r1, r2, r3 := results[0], results[1], results[2]
+
+	// Проверка на три одинаковых
+	if r1 == r2 && r2 == r3 {
+		switch r1 {
+		case "💎":
+			return betAmount * 10, " (x10)"
+		case "7️⃣":
+			return betAmount * 7, " (x7)"
+		case "🍒":
+			return betAmount * 3, " (x3)"
+		case "🍋", "🍊":
+			return betAmount * 2, " (x2)"
+		}
+	}
+
+	// Проверка на две одинаковые
+	if r1 == r2 || r2 == r3 || r1 == r3 {
+		if rand.Intn(100) < 55 {
+			win := betAmount * 3 / 2
+			if win*2 < betAmount*3 {
+				win++
+			}
+			return win, " (x1.5)"
+		}
+	} else {
+		// Утешительный приз за полное несовпадение (редко)
+		if rand.Intn(100) < 45 {
+			win := betAmount * 6 / 5
+			if win*5 < betAmount*6 {
+				win++
+			}
+			return win, " (x1.2)"
+		}
+	}
+
+	return 0, ""
 }
 
 func migrateDB(db *sql.DB) {
@@ -453,48 +493,13 @@ func main() {
 		}
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
-
 		results := []string{
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
 		}
 
-		var winAmount int
-		var multiplierText string
-
-		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			winAmount = amount * 10
-			multiplierText = " (x10)"
-		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			winAmount = amount * 7
-			multiplierText = " (x7)"
-		} else if results[0] == results[1] && results[1] == results[2] {
-			if results[0] == "🍒" {
-				winAmount = amount * 3
-				multiplierText = " (x3)"
-			} else if results[0] == "🍋" || results[0] == "🍊" {
-				winAmount = amount * 2
-				multiplierText = " (x2)"
-			}
-		} else if results[0] == results[1] || results[1] == results[2] || results[0] == results[2] {
-			if rand.Intn(100) < 55 {
-				winAmount = amount * 3 / 2
-				if winAmount*2 < amount*3 {
-					winAmount++
-				}
-				multiplierText = " (x1.5)"
-			}
-		} else {
-			if rand.Intn(100) < 45 {
-				winAmount = amount * 6 / 5
-				if winAmount*5 < amount*6 {
-					winAmount++
-				}
-				multiplierText = " (x1.2)"
-			}
-		}
-
+		winAmount, multiplierText := calculateSlotWin(results, amount)
 		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
 
 		var finalMessage string
@@ -536,31 +541,36 @@ func main() {
 		}
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
-
 		results := []string{
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
 			slots[rand.Intn(len(slots))],
 		}
 
+		// Для All In логика немного другая (нет x1.5 и x1.2 обычно, но можно адаптировать calculateSlotWin или написать свою)
+		// Здесь используем упрощенную логику как было раньше, но через switch
+
+		r1, r2, r3 := results[0], results[1], results[2]
 		var winAmount int
 		var multiplierText string
 
-		if results[0] == "💎" && results[1] == "💎" && results[2] == "💎" {
-			winAmount = total * 10
-			multiplierText = " (x10)"
-		} else if results[0] == "7️⃣" && results[1] == "7️⃣" && results[2] == "7️⃣" {
-			winAmount = total * 7
-			multiplierText = " (x7)"
-		} else if results[0] == results[1] && results[1] == results[2] {
-			if results[0] == "🍒" {
+		if r1 == r2 && r2 == r3 {
+			switch r1 {
+			case "💎":
+				winAmount = total * 10
+				multiplierText = " (x10)"
+			case "7️⃣":
+				winAmount = total * 7
+				multiplierText = " (x7)"
+			case "🍒":
 				winAmount = total * 3
 				multiplierText = " (x3)"
-			} else if results[0] == "🍋" || results[0] == "🍊" {
+			case "🍋", "🍊":
 				winAmount = total * 2
 				multiplierText = " (x2)"
 			}
 		} else {
+			// В All In часто дают шанс на удвоение даже при несовпадении, если повезет
 			if rand.Intn(100) < 55 {
 				winAmount = total * 2
 				multiplierText = " (x2)"
