@@ -123,8 +123,8 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		return nil, err
 	}
 
-	for i := 0; i < 5; i++ {
-		time.Sleep(200 * time.Millisecond)
+	for i := 0; i < 3; i++ {
+		time.Sleep(1 * time.Second)
 
 		animResults := []string{
 			slotSymbols[rand.Intn(len(slotSymbols))],
@@ -136,7 +136,7 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		_, _ = b.Edit(startMsg, animDisplay, opt)
 	}
 
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	_, err = b.Edit(startMsg, finalText, opt)
 
 	return startMsg, err
@@ -158,7 +158,6 @@ func migrateDB(db *sql.DB) {
 	for _, query := range columnsToAdd {
 		_, err := db.Exec(query)
 		if err != nil {
-			// Игнорируем ошибки "duplicate column name", так как это означает, что колонка уже есть
 			continue
 		}
 	}
@@ -623,7 +622,6 @@ func parseAmount(s string) (int, error) {
 }
 
 func initDB() {
-	// Эта функция теперь пуста, так как инициализация перенесена в main для миграции
 }
 
 func addZrazy(userID int64, userName string, amount int) {
