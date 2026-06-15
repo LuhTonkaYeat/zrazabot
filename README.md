@@ -16,7 +16,7 @@
 
 ## Технологии
 
-- Go 1.23
+- Go 1.26.3
 - SQLite
 - gopkg.in/telebot.v3
 - modernc.org/sqlite
