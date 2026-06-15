@@ -123,7 +123,6 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		return nil, err
 	}
 
-	// Делаем 3 кадра анимации "вращения"
 	for i := 0; i < 3; i++ {
 		time.Sleep(600 * time.Millisecond)
 
@@ -137,10 +136,8 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		_, _ = b.Edit(startMsg, displayText, opt)
 	}
 
-	// Финальная пауза перед результатом
 	time.Sleep(600 * time.Millisecond)
 
-	// Четкий финальный кадр с результатом
 	_, err = b.Edit(startMsg, finalText, opt)
 	return startMsg, err
 }
@@ -148,7 +145,6 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 func calculateSlotWin(results []string, betAmount int) (int, string) {
 	r1, r2, r3 := results[0], results[1], results[2]
 
-	// Проверка на три одинаковых
 	if r1 == r2 && r2 == r3 {
 		switch r1 {
 		case "💎":
@@ -162,7 +158,6 @@ func calculateSlotWin(results []string, betAmount int) (int, string) {
 		}
 	}
 
-	// Проверка на две одинаковые
 	if r1 == r2 || r2 == r3 || r1 == r3 {
 		if rand.Intn(100) < 55 {
 			win := betAmount * 3 / 2
@@ -172,7 +167,6 @@ func calculateSlotWin(results []string, betAmount int) (int, string) {
 			return win, " (x1.5)"
 		}
 	} else {
-		// Утешительный приз за полное несовпадение (редко)
 		if rand.Intn(100) < 45 {
 			win := betAmount * 6 / 5
 			if win*5 < betAmount*6 {
@@ -183,27 +177,6 @@ func calculateSlotWin(results []string, betAmount int) (int, string) {
 	}
 
 	return 0, ""
-}
-
-func migrateDB(db *sql.DB) {
-	columnsToAdd := []string{
-		"ALTER TABLE users ADD COLUMN all_cooldown INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN steal_cooldown INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN slot_cooldown INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN lucky_count INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN steal_success INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN steal_fail INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN give_total INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN max_total INTEGER DEFAULT 0",
-		"ALTER TABLE users ADD COLUMN shit_total INTEGER DEFAULT 0",
-	}
-
-	for _, query := range columnsToAdd {
-		_, err := db.Exec(query)
-		if err != nil {
-			continue
-		}
-	}
 }
 
 func main() {
@@ -224,26 +197,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            user_name TEXT DEFAULT '',
-            total INTEGER DEFAULT 0,
-            last_used INTEGER DEFAULT 0
-        )
-    `)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	migrateDB(db)
+	initDB()
 
 	b.Handle("/zraza", func(c tele.Context) error {
 		userID := c.Sender().ID
@@ -547,9 +501,6 @@ func main() {
 			slots[rand.Intn(len(slots))],
 		}
 
-		// Для All In логика немного другая (нет x1.5 и x1.2 обычно, но можно адаптировать calculateSlotWin или написать свою)
-		// Здесь используем упрощенную логику как было раньше, но через switch
-
 		r1, r2, r3 := results[0], results[1], results[2]
 		var winAmount int
 		var multiplierText string
@@ -570,7 +521,6 @@ func main() {
 				multiplierText = " (x2)"
 			}
 		} else {
-			// В All In часто дают шанс на удвоение даже при несовпадении, если повезет
 			if rand.Intn(100) < 55 {
 				winAmount = total * 2
 				multiplierText = " (x2)"
@@ -635,6 +585,33 @@ func parseAmount(s string) (int, error) {
 }
 
 func initDB() {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            user_name TEXT DEFAULT '',
+            total INTEGER DEFAULT 0,
+            max_total INTEGER DEFAULT 0,
+            last_used INTEGER DEFAULT 0,
+            shit_total INTEGER DEFAULT 0,
+            steal_cooldown INTEGER DEFAULT 0,
+            slot_cooldown INTEGER DEFAULT 0,
+            all_cooldown INTEGER DEFAULT 0,
+            lucky_count INTEGER DEFAULT 0,
+            steal_success INTEGER DEFAULT 0,
+            steal_fail INTEGER DEFAULT 0,
+            give_total INTEGER DEFAULT 0
+        )
+    `)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func addZrazy(userID int64, userName string, amount int) {
