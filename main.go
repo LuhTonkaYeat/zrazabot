@@ -123,23 +123,26 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 		return nil, err
 	}
 
-	for i := 0; i < 3; i++ {
-		time.Sleep(1 * time.Second)
+	totalFrames := 4
+	for i := 0; i < totalFrames; i++ {
+		time.Sleep(500 * time.Millisecond)
 
-		animResults := []string{
-			slotSymbols[rand.Intn(len(slotSymbols))],
-			slotSymbols[rand.Intn(len(slotSymbols))],
-			slotSymbols[rand.Intn(len(slotSymbols))],
+		var displayText string
+		if i == totalFrames-1 {
+			displayText = finalText
+		} else {
+			animResults := []string{
+				slotSymbols[rand.Intn(len(slotSymbols))],
+				slotSymbols[rand.Intn(len(slotSymbols))],
+				slotSymbols[rand.Intn(len(slotSymbols))],
+			}
+			displayText = fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 		}
-		animDisplay := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 
-		_, _ = b.Edit(startMsg, animDisplay, opt)
+		_, _ = b.Edit(startMsg, displayText, opt)
 	}
 
-	time.Sleep(1 * time.Second)
-	_, err = b.Edit(startMsg, finalText, opt)
-
-	return startMsg, err
+	return startMsg, nil
 }
 
 func migrateDB(db *sql.DB) {
