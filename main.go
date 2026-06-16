@@ -192,8 +192,8 @@ func main() {
 
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
-		if now-lastUsed < 600 && lastUsed != 0 {
-			secondsLeft := 600 - (now - lastUsed)
+		if now-lastUsed < 1800 && lastUsed != 0 {
+			secondsLeft := 1800 - (now - lastUsed)
 			timeLeft := formatCooldown(secondsLeft)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽_ /zraza_",
 				userName, timeLeft))
@@ -299,7 +299,7 @@ func main() {
 		}
 
 		if len(message) == 0 {
-			message = "_Пока стата пустая..._"
+			message = "_Либо бд пpoeбaлacь, либо еще нет актива..._"
 		}
 
 		return sendToTopic(b, c, message)
@@ -428,8 +428,8 @@ func main() {
 
 		lastSlot := getSlotCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastSlot < 60 && lastSlot != 0 {
-			secondsLeft := 60 - (now - lastSlot)
+		if now-lastSlot < 300 && lastSlot != 0 {
+			secondsLeft := 300 - (now - lastSlot)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %d секунд_", userFirstName, secondsLeft))
 		}
 
@@ -593,11 +593,39 @@ func initDB() {
             lucky_count INTEGER DEFAULT 0,
             steal_success INTEGER DEFAULT 0,
             steal_fail INTEGER DEFAULT 0,
-            give_total INTEGER DEFAULT 0
+            give_total INTEGER DEFAULT 0,
+            has_base_perk INTEGER DEFAULT 0,
+            has_plus_perk INTEGER DEFAULT 0,
+            has_prime_perk INTEGER DEFAULT 0,
+            has_balabol INTEGER DEFAULT 0,
+            has_gigabalabol INTEGER DEFAULT 0,
+            has_jew INTEGER DEFAULT 0,
+            has_bmw INTEGER DEFAULT 0,
+            has_antigovno INTEGER DEFAULT 0,
+            message_count INTEGER DEFAULT 0
         )
     `)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	columns := []string{
+		"has_base_perk",
+		"has_plus_perk",
+		"has_prime_perk",
+		"has_balabol",
+		"has_gigabalabol",
+		"has_jew",
+		"has_bmw",
+		"has_antigovno",
+		"message_count",
+	}
+
+	for _, col := range columns {
+		_, err = db.Exec(fmt.Sprintf("ALTER TABLE users ADD COLUMN %s INTEGER DEFAULT 0", col))
+		if err != nil {
+			log.Printf("Column %s already exists or migration skipped", col)
+		}
 	}
 }
 
