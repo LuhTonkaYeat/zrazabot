@@ -69,22 +69,13 @@ func formatZrazyGenitive(count int) string {
 	return "зраз"
 }
 
-func formatLuckyCount(count int) string {
+func formatGenericCount(count int, one string, few string, many string) string {
 	if count%10 == 1 && count%100 != 11 {
-		return "раз"
+		return one
 	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
-		return "раза"
+		return few
 	}
-	return "раз"
-}
-
-func formatShitCount(count int) string {
-	if count%10 == 1 && count%100 != 11 {
-		return "раз"
-	} else if (count%10 >= 2 && count%10 <= 4) && (count%100 < 10 || count%100 >= 20) {
-		return "раза"
-	}
-	return "раз"
+	return many
 }
 
 func formatStealCount(count int) string {
@@ -191,6 +182,34 @@ func main() {
 		userID := c.Sender().ID
 		userName := c.Sender().FirstName
 
+		today := time.Now().Format("2006-01-02")
+		lastReward := getLastDailyReward(userID)
+
+		if lastReward != today {
+			rewardMsg := ""
+			nowTime := time.Now()
+
+			if hasPerk(userID, "has_prime_perk") && nowTime.Hour() >= 9 {
+				addZrazy(userID, userName, 15)
+				rewardMsg += "+15 🥣 (Prime)\n"
+			}
+
+			if hasPerk(userID, "has_plus_perk") && (nowTime.Hour() > 9 || (nowTime.Hour() == 9 && nowTime.Minute() >= 30)) {
+				addZrazy(userID, userName, 10)
+				rewardMsg += "+10 🥣 (Plus)\n"
+			}
+
+			if hasPerk(userID, "has_base_perk") && nowTime.Hour() >= 10 {
+				addZrazy(userID, userName, 3)
+				rewardMsg += "+3 🥣 (Base)\n"
+			}
+
+			if rewardMsg != "" {
+				updateDailyReward(userID, today)
+				go sendToTopic(b, c, fmt.Sprintf("🌅 *Утренняя раздача!*\n\n%s", rewardMsg))
+			}
+		}
+
 		lastUsed := getLastUsed(userID)
 		now := time.Now().Unix()
 		if now-lastUsed < 1800 && lastUsed != 0 {
@@ -213,19 +232,22 @@ func main() {
 
 		if rarity < 10 {
 			resetZrazy(userID)
-			addShit(userID, userName, 1)
-			updateLastUsed(userID, now)
 
-			if rand.Intn(100) < 20 {
-				addZrazy(userID, userName, 50)
-				resetSlotCooldown(userID)
-				resetAllCooldown(userID)
-				return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n✨ *БОНУС!* Ты получил 50 зраз за такое унижение! Кулдауны сброшены!\n\n🍽_ /zraza_",
-					userName))
+			hasAntiGovno := hasPerk(userID, "has_antigovno")
+			shitChance := 100
+			if hasAntiGovno {
+				shitChance = 2
 			}
 
-			return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽_ /zraza_",
-				userName))
+			if rand.Intn(100) < shitChance {
+				addShit(userID, userName, 1)
+				updateLastUsed(userID, now)
+
+				return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽_ /zraza_",
+					userName))
+			} else {
+				return sendToTopic(b, c, "_🛡️ Твой *Antigovno* спас жопу! Обнуления не произошло._\n\n🍽_ /zraza_")
+			}
 		}
 
 		eaten := rand.Intn(20) + 1
@@ -267,7 +289,7 @@ func main() {
 		if len(shitLeaders) > 0 {
 			message += "_💩 Топ говноедов:_\n"
 			for i, s := range shitLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, s.name, s.total, formatShitCount(s.total))
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, s.name, s.total, formatGenericCount(s.total, "раз", "раза", "раз"))
 			}
 			message += "\n"
 		}
@@ -276,7 +298,7 @@ func main() {
 		if len(luckyLeaders) > 0 {
 			message += "_✨ Топ лакеров (67 зраз):_\n"
 			for i, l := range luckyLeaders {
-				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, l.name, l.count, formatLuckyCount(l.count))
+				message += fmt.Sprintf("%d. _%s_ - _%d %s_\n", i+1, l.name, l.count, formatGenericCount(l.count, "раз", "раза", "раз"))
 			}
 			message += "\n"
 		}
@@ -303,12 +325,6 @@ func main() {
 			message = "_Либо бд пpoeбaлacь, либо еще нет актива..._"
 		}
 
-		return sendToTopic(b, c, message)
-	})
-
-	b.Handle("/kisel", func(c tele.Context) error {
-		userName := c.Sender().FirstName
-		message := fmt.Sprintf("*%s* _сказал, что КИСЕЛЬ ДАУН_", userName)
 		return sendToTopic(b, c, message)
 	})
 
@@ -429,9 +445,16 @@ func main() {
 
 		lastSlot := getSlotCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastSlot < 300 && lastSlot != 0 {
-			secondsLeft := 300 - (now - lastSlot)
-			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %d секунд_", userFirstName, secondsLeft))
+		cooldownTime := int64(300)
+
+		if hasBMW := hasPerk(userID, "has_bmw"); hasBMW {
+			cooldownTime = int64(float64(cooldownTime) * 0.75)
+		}
+
+		if now-lastSlot < cooldownTime && lastSlot != 0 {
+			secondsLeft := cooldownTime - (now - lastSlot)
+			timeLeft := formatCooldown(secondsLeft)
+			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %s_", userFirstName, timeLeft))
 		}
 
 		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
@@ -470,8 +493,14 @@ func main() {
 
 		lastAll := getAllCooldown(userID)
 		now := time.Now().Unix()
-		if now-lastAll < 10800 && lastAll != 0 {
-			secondsLeft := 10800 - (now - lastAll)
+		cooldownAll := int64(10800)
+
+		if hasBMW := hasPerk(userID, "has_bmw"); hasBMW {
+			cooldownAll = int64(float64(cooldownAll) * 0.75)
+		}
+
+		if now-lastAll < cooldownAll && lastAll != 0 {
+			secondsLeft := cooldownAll - (now - lastAll)
 			timeLeft := formatCooldown(secondsLeft)
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, all in можно делать только раз в 3 часа_\n_Осталось ждать: %s_",
 				userFirstName, timeLeft))
@@ -729,6 +758,53 @@ func main() {
 				InlineKeyboard: [][]tele.InlineButton{},
 			},
 		})
+	})
+
+	b.Handle("/kisel", func(c tele.Context) error {
+		userName := c.Sender().FirstName
+		message := fmt.Sprintf("*%s* _сказал, что КИСЕЛЬ ДАУН_", userName)
+		return sendToTopic(b, c, message)
+	})
+
+	b.Handle(tele.OnText, func(c tele.Context) error {
+		userID := c.Sender().ID
+
+		if strings.HasPrefix(c.Text(), "/") {
+			return nil
+		}
+
+		dbPath := getDBPath()
+		db, err := sql.Open("sqlite", dbPath)
+		if err != nil {
+			return nil
+		}
+		defer db.Close()
+
+		db.Exec("INSERT INTO users (user_id, message_count) VALUES (?, 1) ON CONFLICT(user_id) DO UPDATE SET message_count = message_count + 1", userID)
+
+		var msgCount int
+		err = db.QueryRow("SELECT message_count FROM users WHERE user_id = ?", userID).Scan(&msgCount)
+		if err != nil {
+			return nil
+		}
+
+		if msgCount > 0 && msgCount%50 == 0 {
+			reward := 0
+			perkName := ""
+			if hasPerk(userID, "has_gigabalabol") {
+				reward = 30
+				perkName = "Gigabalabol"
+			} else if hasPerk(userID, "has_balabol") {
+				reward = 10
+				perkName = "Balabol"
+			}
+
+			if reward > 0 {
+				addZrazy(userID, c.Sender().FirstName, reward)
+				go sendToTopic(b, c, fmt.Sprintf("💬 *%s* активирован! +%d зраз за %d сообщений.", perkName, reward, msgCount))
+			}
+		}
+		return nil
 	})
 
 	log.Println("Бот запущен! Напиши /zraza в Telegram")
@@ -1067,6 +1143,28 @@ func getAllCooldown(userID int64) int64 {
 	return allCooldown
 }
 
+func getLastDailyReward(userID int64) string {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return ""
+	}
+	defer db.Close()
+	var date string
+	db.QueryRow("SELECT last_daily_reward FROM users WHERE user_id = ?", userID).Scan(&date)
+	return date
+}
+
+func updateDailyReward(userID int64, date string) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+	db.Exec("UPDATE users SET last_daily_reward = ? WHERE user_id = ?", date, userID)
+}
+
 func updateLastUsed(userID int64, timestamp int64) {
 	dbPath := getDBPath()
 	db, err := sql.Open("sqlite", dbPath)
@@ -1383,4 +1481,36 @@ func getSlotCooldown(userID int64) int64 {
 		return 0
 	}
 	return slotCooldown
+}
+
+func distributeJewTax(loserID int64, lostAmount int) {
+	if lostAmount <= 0 {
+		return
+	}
+
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT user_id, user_name FROM users WHERE has_jew = 1 AND user_id != ?", loserID)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	tax := int(float64(lostAmount) * 0.03)
+	if tax < 1 {
+		return
+	}
+
+	for rows.Next() {
+		var jewID int64
+		var jewName string
+		if err := rows.Scan(&jewID, &jewName); err == nil {
+			addZrazy(jewID, jewName, tax)
+		}
+	}
 }
