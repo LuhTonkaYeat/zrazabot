@@ -880,13 +880,6 @@ func initDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	_, err = db.Exec(`ALTER TABLE users ADD COLUMN last_daily_reward TEXT DEFAULT ''`)
-	if err != nil {
-		if !strings.Contains(err.Error(), "duplicate column name") {
-			log.Println("Warning: DB migration check failed:", err)
-		}
-	}
 }
 
 func hasPerk(userID int64, column string) bool {
