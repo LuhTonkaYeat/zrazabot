@@ -873,11 +873,19 @@ func initDB() {
             has_jew INTEGER DEFAULT 0,
             has_bmw INTEGER DEFAULT 0,
             has_antigovno INTEGER DEFAULT 0,
-            message_count INTEGER DEFAULT 0
+            message_count INTEGER DEFAULT 0,
+            last_daily_reward TEXT DEFAULT ''
         )
     `)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	_, err = db.Exec(`ALTER TABLE users ADD COLUMN last_daily_reward TEXT DEFAULT ''`)
+	if err != nil {
+		if !strings.Contains(err.Error(), "duplicate column name") {
+			log.Println("Warning: DB migration check failed:", err)
+		}
 	}
 }
 
