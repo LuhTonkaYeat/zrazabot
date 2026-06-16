@@ -474,6 +474,7 @@ func main() {
 		} else {
 			finalMessage = fmt.Sprintf("%s\n\n*%s* проебал %d %s...",
 				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
+			distributeJewTax(userID, amount)
 		}
 
 		updateSlotCooldown(userID, now)
@@ -562,6 +563,7 @@ func main() {
 			addZrazy(userID, userFirstName, winAmount)
 		} else {
 			resetZrazy(userID)
+			distributeJewTax(userID, total)
 		}
 
 		_, err := animateSlots(b, c, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", finalMessage, slots)
