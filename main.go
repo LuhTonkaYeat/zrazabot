@@ -156,7 +156,7 @@ func calculateWin(results []string, betAmount int) (int, string) {
 	}
 
 	if r1 == r2 || r2 == r3 || r1 == r3 {
-		win := int(float64(betAmount) * 1.3)
+		win := int(float64(betAmount) * 1.5)
 		return win, " (x1.3)"
 	}
 
