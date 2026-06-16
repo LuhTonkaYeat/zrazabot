@@ -608,25 +608,6 @@ func initDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	columns := []string{
-		"has_base_perk",
-		"has_plus_perk",
-		"has_prime_perk",
-		"has_balabol",
-		"has_gigabalabol",
-		"has_jew",
-		"has_bmw",
-		"has_antigovno",
-		"message_count",
-	}
-
-	for _, col := range columns {
-		_, err = db.Exec(fmt.Sprintf("ALTER TABLE users ADD COLUMN %s INTEGER DEFAULT 0", col))
-		if err != nil {
-			log.Printf("Column %s already exists or migration skipped", col)
-		}
-	}
 }
 
 func addZrazy(userID int64, userName string, amount int) {
