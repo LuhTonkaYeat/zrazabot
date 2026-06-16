@@ -615,25 +615,25 @@ func main() {
 
 		var buttons []tele.InlineButton
 		if !hasBase {
-			buttons = append(buttons, tele.InlineButton{Text: "🥄 Base", Data: "buy_base"})
+			buttons = append(buttons, tele.InlineButton{Text: "🥄 Base perk", Data: "buy_base"})
 		}
 		if !hasPlus {
-			buttons = append(buttons, tele.InlineButton{Text: "🥄 Plus", Data: "buy_plus"})
+			buttons = append(buttons, tele.InlineButton{Text: "🥄 Plus perk", Data: "buy_plus"})
 		}
 		if !hasPrime {
-			buttons = append(buttons, tele.InlineButton{Text: "👑 Prime", Data: "buy_prime"})
+			buttons = append(buttons, tele.InlineButton{Text: "👑 Prime perk", Data: "buy_prime"})
 		}
 		if !hasBalabol {
 			buttons = append(buttons, tele.InlineButton{Text: "💬 Balabol", Data: "buy_balabol"})
 		}
 		if !hasGiga {
-			buttons = append(buttons, tele.InlineButton{Text: "💬 Giga", Data: "buy_giga"})
+			buttons = append(buttons, tele.InlineButton{Text: "💬 Gigabalabol", Data: "buy_giga"})
 		}
 		if !hasJew {
 			buttons = append(buttons, tele.InlineButton{Text: "💰 Jew", Data: "buy_jew"})
 		}
 		if !hasBMW {
-			buttons = append(buttons, tele.InlineButton{Text: "🚗 BMW", Data: "buy_bmw"})
+			buttons = append(buttons, tele.InlineButton{Text: "🚗 BMW M4", Data: "buy_bmw"})
 		}
 		if !hasAntiGovno {
 			buttons = append(buttons, tele.InlineButton{Text: "🛡️ Antigovno", Data: "buy_antigovno"})
