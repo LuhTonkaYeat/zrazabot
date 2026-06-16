@@ -103,7 +103,7 @@ func sendToTopic(b *tele.Bot, c tele.Context, text string) error {
 	return err
 }
 
-func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText string, slotSymbols []string) (*tele.Message, error) {
+func animateSlots(b *tele.Bot, c tele.Context, initialText string, slotSymbols []string) (*tele.Message, []string, error) {
 	msg := c.Message()
 	opt := &tele.SendOptions{
 		ParseMode: tele.ModeMarkdown,
@@ -112,8 +112,10 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 
 	startMsg, err := b.Send(msg.Chat, initialText, opt)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	var lastFrameResults []string
 
 	for i := 0; i < 3; i++ {
 		time.Sleep(1 * time.Second)
@@ -123,18 +125,21 @@ func animateSlots(b *tele.Bot, c tele.Context, initialText string, finalText str
 			slotSymbols[rand.Intn(len(slotSymbols))],
 			slotSymbols[rand.Intn(len(slotSymbols))],
 		}
-		displayText := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 
+		if i == 2 {
+			lastFrameResults = animResults
+		}
+
+		displayText := fmt.Sprintf("%s | %s | %s", animResults[0], animResults[1], animResults[2])
 		_, _ = b.Edit(startMsg, displayText, opt)
 	}
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(900 * time.Millisecond)
 
-	_, err = b.Edit(startMsg, finalText, opt)
-	return startMsg, err
+	return startMsg, lastFrameResults, nil
 }
 
-func calculateSlotWin(results []string, betAmount int) (int, string) {
+func calculateWin(results []string, betAmount int) (int, string) {
 	r1, r2, r3 := results[0], results[1], results[2]
 
 	if r1 == r2 && r2 == r3 {
@@ -145,7 +150,7 @@ func calculateSlotWin(results []string, betAmount int) (int, string) {
 			return betAmount * 7, " (x7)"
 		case "🍒":
 			return betAmount * 3, " (x3)"
-		case "🍋", "🍊":
+		case "🍋", "🍉":
 			return betAmount * 2, " (x2)"
 		}
 	}
@@ -457,15 +462,15 @@ func main() {
 			return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, погоди %s_", userFirstName, timeLeft))
 		}
 
-		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
-		results := []string{
-			slots[rand.Intn(len(slots))],
-			slots[rand.Intn(len(slots))],
-			slots[rand.Intn(len(slots))],
+		slots := []string{"🍒", "🍋", "🍉", "💎", "7️⃣"}
+
+		startMsg, finalResults, err := animateSlots(b, c, "🎰 *Поехали...* 🎰", slots)
+		if err != nil {
+			return err
 		}
 
-		winAmount, multiplierText := calculateSlotWin(results, amount)
-		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
+		winAmount, multiplierText := calculateWin(finalResults, amount)
+		slotDisplay := fmt.Sprintf("%s | %s | %s", finalResults[0], finalResults[1], finalResults[2])
 
 		var finalMessage string
 		if winAmount > 0 {
@@ -484,7 +489,11 @@ func main() {
 			addZrazy(userID, userFirstName, -amount)
 		}
 
-		_, err = animateSlots(b, c, "🎰 *Поехали...* 🎰", finalMessage, slots)
+		opt := &tele.SendOptions{
+			ParseMode: tele.ModeMarkdown,
+			ThreadID:  c.Message().ThreadID,
+		}
+		_, err = b.Edit(startMsg, finalMessage, opt)
 		return err
 	})
 
@@ -512,40 +521,15 @@ func main() {
 			return sendToTopic(b, c, fmt.Sprintf("⚠️ _%s, для аллына нужно хотя бы 5 зраз... Накопи сначала_", userFirstName))
 		}
 
-		slots := []string{"🍒", "🍋", "🍊", "💎", "7️⃣"}
-		results := []string{
-			slots[rand.Intn(len(slots))],
-			slots[rand.Intn(len(slots))],
-			slots[rand.Intn(len(slots))],
+		slots := []string{"🍒", "🍋", "🍉", "💎", "7️⃣"}
+
+		startMsg, finalResults, err := animateSlots(b, c, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", slots)
+		if err != nil {
+			return err
 		}
 
-		r1, r2, r3 := results[0], results[1], results[2]
-		var winAmount int
-		var multiplierText string
-
-		if r1 == r2 && r2 == r3 {
-			switch r1 {
-			case "💎":
-				winAmount = total * 10
-				multiplierText = " (x10)"
-			case "7️⃣":
-				winAmount = total * 7
-				multiplierText = " (x7)"
-			case "🍒":
-				winAmount = total * 3
-				multiplierText = " (x3)"
-			case "🍋", "🍊":
-				winAmount = total * 2
-				multiplierText = " (x2)"
-			}
-		} else {
-			if rand.Intn(100) < 55 {
-				winAmount = total * 2
-				multiplierText = " (x2)"
-			}
-		}
-
-		slotDisplay := fmt.Sprintf("%s | %s | %s", results[0], results[1], results[2])
+		winAmount, multiplierText := calculateWin(finalResults, total)
+		slotDisplay := fmt.Sprintf("%s | %s | %s", finalResults[0], finalResults[1], finalResults[2])
 
 		var finalMessage string
 		if winAmount > 0 {
@@ -566,7 +550,11 @@ func main() {
 			distributeJewTax(userID, total)
 		}
 
-		_, err := animateSlots(b, c, "🔥 *ALL IN! ПОШЛО-ПОЕХАЛО...* 🔥", finalMessage, slots)
+		opt := &tele.SendOptions{
+			ParseMode: tele.ModeMarkdown,
+			ThreadID:  c.Message().ThreadID,
+		}
+		_, err = b.Edit(startMsg, finalMessage, opt)
 		return err
 	})
 
