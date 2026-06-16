@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -538,6 +539,206 @@ func main() {
 		return err
 	})
 
+	b.Handle("/shop", func(c tele.Context) error {
+		userID := c.Sender().ID
+
+		hasBase := hasPerk(userID, "has_base_perk")
+		hasPlus := hasPerk(userID, "has_plus_perk")
+		hasPrime := hasPerk(userID, "has_prime_perk")
+		hasBalabol := hasPerk(userID, "has_balabol")
+		hasGiga := hasPerk(userID, "has_gigabalabol")
+		hasJew := hasPerk(userID, "has_jew")
+		hasBMW := hasPerk(userID, "has_bmw")
+		hasAntiGovno := hasPerk(userID, "has_antigovno")
+
+		total := getTotal(userID)
+
+		message := "🛒 *МАГАЗИН ПЕРКОВ*\n\n"
+
+		message += fmt.Sprintf("🥄 *Base Perk* — 150 зраз\n")
+		message += fmt.Sprintf("   Ежедневно +3 зразы в 10:00\n")
+		if hasBase {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("🥄 *Plus Perk* — 500 зраз\n")
+		message += fmt.Sprintf("   Ежедневно +10 зраз в 9:30\n")
+		if hasPlus {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("👑 *Prime Perk* — 1000 зраз\n")
+		message += fmt.Sprintf("   Ежедневно +15 зраз в 9:00 + статус в чате\n")
+		if hasPrime {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("💬 *Balabol* — 800 зраз\n")
+		message += fmt.Sprintf("   +10 зраз за каждые 50 сообщений\n")
+		if hasBalabol {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("💬 *Gigabalabol* — 2500 зраз\n")
+		message += fmt.Sprintf("   +30 зраз за каждые 50 сообщений\n")
+		if hasGiga {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("💰 *Jew* — 5000 зраз\n")
+		message += fmt.Sprintf("   3%% от проигрышей других в казино\n")
+		if hasJew {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("🚗 *BMW M4 Owner* — 480 зраз\n")
+		message += fmt.Sprintf("   -25%% ко всем кулдаунам\n")
+		if hasBMW {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("🛡️ *Antigovno* — 1500 зраз\n")
+		message += fmt.Sprintf("   Шанс обнуления ↓ до 2%%\n")
+		if hasAntiGovno {
+			message += "   ✅ *КУПЛЕНО*\n"
+		}
+		message += "\n"
+
+		message += fmt.Sprintf("\n💰 *Твой баланс:* %d %s", total, formatZrazyNominative(total))
+
+		var buttons []tele.InlineButton
+		if !hasBase {
+			buttons = append(buttons, tele.InlineButton{Text: "🥄 Base", Data: "buy_base"})
+		}
+		if !hasPlus {
+			buttons = append(buttons, tele.InlineButton{Text: "🥄 Plus", Data: "buy_plus"})
+		}
+		if !hasPrime {
+			buttons = append(buttons, tele.InlineButton{Text: "👑 Prime", Data: "buy_prime"})
+		}
+		if !hasBalabol {
+			buttons = append(buttons, tele.InlineButton{Text: "💬 Balabol", Data: "buy_balabol"})
+		}
+		if !hasGiga {
+			buttons = append(buttons, tele.InlineButton{Text: "💬 Giga", Data: "buy_giga"})
+		}
+		if !hasJew {
+			buttons = append(buttons, tele.InlineButton{Text: "💰 Jew", Data: "buy_jew"})
+		}
+		if !hasBMW {
+			buttons = append(buttons, tele.InlineButton{Text: "🚗 BMW", Data: "buy_bmw"})
+		}
+		if !hasAntiGovno {
+			buttons = append(buttons, tele.InlineButton{Text: "🛡️ Antigovno", Data: "buy_antigovno"})
+		}
+
+		var rows [][]tele.InlineButton
+		for i := 0; i < len(buttons); i += 2 {
+			end := i + 2
+			if end > len(buttons) {
+				end = len(buttons)
+			}
+			rows = append(rows, buttons[i:end])
+		}
+
+		if len(buttons) == 0 {
+			message += "\n\n✨ *Все перки уже куплены!*"
+			return sendToTopic(b, c, message)
+		}
+
+		msg := c.Message()
+		chat := msg.Chat
+		topicID := msg.ThreadID
+
+		_, err := b.Send(chat, message, &tele.SendOptions{
+			ParseMode: tele.ModeMarkdown,
+			ThreadID:  topicID,
+			ReplyMarkup: &tele.ReplyMarkup{
+				InlineKeyboard: rows,
+			},
+		})
+		return err
+	})
+
+	b.Handle(tele.OnCallback, func(c tele.Context) error {
+		data := c.Data()
+		userID := c.Sender().ID
+
+		if !strings.HasPrefix(data, "buy_") {
+			return nil
+		}
+
+		var cost int
+		var perkName string
+		var perkColumn string
+
+		switch data {
+		case "buy_base":
+			cost = 150
+			perkName = "Base Perk"
+			perkColumn = "has_base_perk"
+		case "buy_plus":
+			cost = 500
+			perkName = "Plus Perk"
+			perkColumn = "has_plus_perk"
+		case "buy_prime":
+			cost = 1000
+			perkName = "Prime Perk"
+			perkColumn = "has_prime_perk"
+		case "buy_balabol":
+			cost = 800
+			perkName = "Balabol"
+			perkColumn = "has_balabol"
+		case "buy_giga":
+			cost = 2500
+			perkName = "Gigabalabol"
+			perkColumn = "has_gigabalabol"
+		case "buy_jew":
+			cost = 5000
+			perkName = "Jew"
+			perkColumn = "has_jew"
+		case "buy_bmw":
+			cost = 480
+			perkName = "BMW M4 Owner"
+			perkColumn = "has_bmw"
+		case "buy_antigovno":
+			cost = 1500
+			perkName = "Antigovno"
+			perkColumn = "has_antigovno"
+		default:
+			return nil
+		}
+
+		if hasPerk(userID, perkColumn) {
+			c.Respond(&tele.CallbackResponse{Text: "Уже куплено! ✅"})
+			return nil
+		}
+
+		total := getTotal(userID)
+		if total < cost {
+			c.Respond(&tele.CallbackResponse{Text: fmt.Sprintf("Не хватает! Нужно: %d, есть: %d", cost, total)})
+			return nil
+		}
+
+		addZrazy(userID, c.Sender().FirstName, -cost)
+		buyPerk(userID, perkColumn)
+		c.Respond(&tele.CallbackResponse{Text: fmt.Sprintf("🎉 Куплено! %s", perkName)})
+
+		return c.Edit(c.Message().Text, &tele.SendOptions{
+			ParseMode: tele.ModeMarkdown,
+			ReplyMarkup: &tele.ReplyMarkup{
+				InlineKeyboard: [][]tele.InlineButton{},
+			},
+		})
+	})
+
 	log.Println("Бот запущен! Напиши /zraza в Telegram")
 	b.Start()
 }
@@ -607,6 +808,44 @@ func initDB() {
     `)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func hasPerk(userID int64, column string) bool {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return false
+	}
+	defer db.Close()
+
+	var val int
+	query := fmt.Sprintf("SELECT %s FROM users WHERE user_id = ?", column)
+	err = db.QueryRow(query, userID).Scan(&val)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+		log.Println("DB error:", err)
+		return false
+	}
+	return val == 1
+}
+
+func buyPerk(userID int64, column string) {
+	dbPath := getDBPath()
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Println("DB error:", err)
+		return
+	}
+	defer db.Close()
+
+	query := fmt.Sprintf("UPDATE users SET %s = 1 WHERE user_id = ?", column)
+	_, err = db.Exec(query, userID)
+	if err != nil {
+		log.Println("DB error:", err)
 	}
 }
 
