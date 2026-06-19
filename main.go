@@ -239,7 +239,7 @@ func main() {
 			hasAntiGovno := hasPerk(userID, "has_antigovno")
 
 			if hasAntiGovno && rand.Intn(100) >= 2 {
-				return sendToTopic(b, c, "_🛡️ Твой *Antigovno* спас жопу! Обнуления не произошло._\n\n🍽_ /zraza_")
+				return sendToTopic(b, c, "_🛡️ Antigovno спас твою жопу! Обнуления не будэ_\n\n🍽_ /zraza_")
 			}
 
 			resetZrazy(userID)
@@ -470,21 +470,25 @@ func main() {
 		winAmount, multiplierText := calculateWin(finalResults, amount)
 		slotDisplay := fmt.Sprintf("%s | %s | %s", finalResults[0], finalResults[1], finalResults[2])
 
-		var finalMessage string
-		if winAmount > 0 {
-			finalMessage = fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s",
-				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText)
-		} else {
-			finalMessage = fmt.Sprintf("%s\n\n*%s* проебал %d %s...",
-				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount))
-			distributeJewTax(userID, amount)
-		}
-
 		updateSlotCooldown(userID, now)
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
 		} else {
 			addZrazy(userID, userFirstName, -amount)
+			distributeJewTax(userID, amount)
+		}
+
+		newTotal := getTotal(userID)
+
+		var finalMessage string
+		if winAmount > 0 {
+			finalMessage = fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s\n\n📊 *Баланс:* %d %s",
+				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText,
+				newTotal, formatZrazyNominative(newTotal))
+		} else {
+			finalMessage = fmt.Sprintf("%s\n\n*%s* проебал %d %s...\n\n📊 *Баланс:* %d %s",
+				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount),
+				newTotal, formatZrazyNominative(newTotal))
 		}
 
 		opt := &tele.SendOptions{
