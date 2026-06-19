@@ -196,7 +196,7 @@ func main() {
 
 			if hasPerk(userID, "has_prime_perk") && nowTime.Hour() >= 9 {
 				addZrazy(userID, userName, 15)
-				rewardMsg += "+15 🥣 (Prime)\n"
+				rewardMsg += "+15 🥣 (Prime)\n\n_Доброе утро, прайм юзер! Остальные бичи не такие пиздaтыe, как ты!_"
 			}
 
 			if hasPerk(userID, "has_plus_perk") && (nowTime.Hour() > 9 || (nowTime.Hour() == 9 && nowTime.Minute() >= 30)) {
@@ -211,7 +211,7 @@ func main() {
 
 			if rewardMsg != "" {
 				updateDailyReward(userID, today)
-				go sendToTopic(b, c, fmt.Sprintf("🌅 *Утренняя раздача!*\n\n%s", rewardMsg))
+				go sendToTopic(b, c, fmt.Sprintf("🌅 *Раздача!*\n\n%s", rewardMsg))
 			}
 		}
 
@@ -236,32 +236,28 @@ func main() {
 		}
 
 		if rarity < 10 {
-			resetZrazy(userID)
-
 			hasAntiGovno := hasPerk(userID, "has_antigovno")
-			shitChance := 100
-			if hasAntiGovno {
-				shitChance = 2
-			}
 
-			if rand.Intn(100) < shitChance {
-				addShit(userID, userName, 1)
-				updateLastUsed(userID, now)
-
-				return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽_ /zraza_",
-					userName))
-			} else {
+			if hasAntiGovno && rand.Intn(100) >= 2 {
 				return sendToTopic(b, c, "_🛡️ Твой *Antigovno* спас жопу! Обнуления не произошло._\n\n🍽_ /zraza_")
 			}
+
+			resetZrazy(userID)
+			addShit(userID, userName, 1)
+			updateLastUsed(userID, now)
+
+			return sendToTopic(b, c, fmt.Sprintf("_💩💩💩 ХЕХЕХЕХЕ, %s навернул тарелку говнеца и обнулил свой счётчик зраз!_\n\n🍽_ /zraza_",
+				userName))
 		}
 
 		eaten := rand.Intn(20) + 1
 		garnish := garnishes[rand.Intn(len(garnishes))]
 		addZrazy(userID, userName, eaten)
 		updateLastUsed(userID, now)
+		total := getTotal(userID)
 
-		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d eбaныx %s и %s!!!_\n\n🍽 _/zraza_",
-			userName, eaten, formatZrazyAccusative(eaten), garnish))
+		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d eбaныx %s и %s!!!_\n\nБалик: %d %s\n\n🍽 _/zraza_",
+			userName, eaten, formatZrazyAccusative(eaten), garnish, total, formatZrazyGenitive(total)))
 	})
 
 	b.Handle("/stat", func(c tele.Context) error {
