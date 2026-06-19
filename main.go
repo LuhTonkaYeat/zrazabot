@@ -533,23 +533,25 @@ func main() {
 		winAmount, multiplierText := calculateWin(finalResults, total)
 		slotDisplay := fmt.Sprintf("%s | %s | %s", finalResults[0], finalResults[1], finalResults[2])
 
-		var finalMessage string
-		if winAmount > 0 {
-			finalMessage = fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s!%s\n\n📊 Теперь на счету: %d %s",
-				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
-				winAmount, formatZrazyAccusative(winAmount), multiplierText,
-				total+winAmount, formatZrazyNominative(total+winAmount))
-		} else {
-			finalMessage = fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nЛУДИК EБAHЫЙ!!!\n\n📊 Теперь на счету: 0 зраз",
-				slotDisplay, userFirstName, total, formatZrazyGenitive(total))
-		}
-
 		updateAllCooldown(userID, now)
 		if winAmount > 0 {
 			addZrazy(userID, userFirstName, winAmount)
 		} else {
 			resetZrazy(userID)
 			distributeJewTax(userID, total)
+		}
+
+		newTotal := getTotal(userID)
+
+		var finalMessage string
+		if winAmount > 0 {
+			finalMessage = fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s!%s\n\n📊 *Баланс:* %d %s",
+				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
+				winAmount, formatZrazyAccusative(winAmount), multiplierText,
+				newTotal, formatZrazyNominative(newTotal))
+		} else {
+			finalMessage = fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nЛУДИК EБAHЫЙ!!!\n\n📊 *Баланс:* 0 зраз",
+				slotDisplay, userFirstName, total, formatZrazyGenitive(total))
 		}
 
 		opt := &tele.SendOptions{
