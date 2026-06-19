@@ -1,7 +1,5 @@
-# База данных
 zrazy.db
 
-# Переменные окружения
 .env
 
 # IDE
@@ -9,5 +7,4 @@ zrazy.db
 .vscode/
 *.swp
 
-# Go модули
 go.sum
