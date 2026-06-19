@@ -256,7 +256,7 @@ func main() {
 		updateLastUsed(userID, now)
 		total := getTotal(userID)
 
-		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d eбaныx %s и %s!!!_\n\nБалик: %d %s\n\n🍽 _/zraza_",
+		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d eбaныx %s и %s!!!\n\nБалик: %d %s\n\n🍽 /zraza_",
 			userName, eaten, formatZrazyAccusative(eaten), garnish, total, formatZrazyGenitive(total)))
 	})
 
@@ -417,8 +417,10 @@ func main() {
 		addZrazy(userID, userName, -amount)
 		addZrazy(targetUserID, targetName, amount)
 		incrementGive(userID, amount)
-		return sendToTopic(b, c, fmt.Sprintf("🎁🎁🎁 ЮХУУУ, *%s* подарил %d %s пользователю *%s*!",
-			userName, amount, formatZrazyAccusative(amount), targetName))
+		targetTotal := getTotal(targetUserID)
+
+		return sendToTopic(b, c, fmt.Sprintf("🎁🎁🎁 ЮХУУУ, *%s* подарил %d %s пользователю *%s*!\n\nБалик: %d %s",
+			userName, amount, formatZrazyAccusative(amount), targetName, targetTotal, formatZrazyGenitive(targetTotal)))
 	})
 
 	b.Handle("/slot", func(c tele.Context) error {
