@@ -230,7 +230,7 @@ func main() {
 
 			if hasPerk(userID, "has_prime_perk") && nowTime.Hour() >= 9 {
 				addZrazy(userID, userName, 15)
-				rewardMsg += "+15 🥣 (Prime)\n\n_Доброе утро, прайм юзер! Остальные бичи не такие пиздaтыe, как ты!_"
+				rewardMsg += "+15 🥣 (Prime)\n\n_Доброго времени суток, прайм юзер! Остальные бичи не такие пиздaтыe, как ты!!!_"
 			}
 
 			if hasPerk(userID, "has_plus_perk") && (nowTime.Hour() > 9 || (nowTime.Hour() == 9 && nowTime.Minute() >= 30)) {
@@ -290,8 +290,8 @@ func main() {
 		updateLastUsed(userID, now)
 		total := getTotal(userID)
 
-		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d eбaныx %s и %s!!!\n\nБалик: %d %s\n\n🍽 /zraza_",
-			userName, eaten, formatZrazyAccusative(eaten), garnish, total, formatZrazyGenitive(total)))
+		return sendToTopic(b, c, fmt.Sprintf("_%s ток что сожрал %d eбaныx %s и %s!!!_\n\n📊 *Балик: %d %s*\n\n🍽 _/zraza_",
+			userName, eaten, formatZrazyAccusative(eaten), garnish, total, formatZrazyAccusative(total)))
 	})
 
 	b.Handle("/stat", func(c tele.Context) error {
@@ -516,11 +516,11 @@ func main() {
 
 		var finalMessage string
 		if winAmount > 0 {
-			finalMessage = fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s\n\n📊 *Баланс:* %d %s",
+			finalMessage = fmt.Sprintf("%s\n\n*%s* выиграл %d %s!%s\n\n📊 *Балик:* %d %s",
 				slotDisplay, userFirstName, winAmount, formatZrazyAccusative(winAmount), multiplierText,
 				newTotal, formatZrazyNominative(newTotal))
 		} else {
-			finalMessage = fmt.Sprintf("%s\n\n*%s* проебал %d %s...\n\n📊 *Баланс:* %d %s",
+			finalMessage = fmt.Sprintf("%s\n\n*%s* проебал %d %s...\n\n📊 *Балик:* %d %s",
 				slotDisplay, userFirstName, amount, formatZrazyAccusative(amount),
 				newTotal, formatZrazyNominative(newTotal))
 		}
@@ -579,12 +579,12 @@ func main() {
 
 		var finalMessage string
 		if winAmount > 0 {
-			finalMessage = fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s!%s\n\n📊 *Баланс:* %d %s",
+			finalMessage = fmt.Sprintf("%s\n\n🔥 *ALL IN!* 🔥\n*%s* поставил всё (%d %s) и выиграл %d %s!%s\n\n📊 *Балик:* %d %s",
 				slotDisplay, userFirstName, total, formatZrazyAccusative(total),
 				winAmount, formatZrazyAccusative(winAmount), multiplierText,
 				newTotal, formatZrazyNominative(newTotal))
 		} else {
-			finalMessage = fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nЛУДИК EБAHЫЙ!!!\n\n📊 *Баланс:* 0 зраз",
+			finalMessage = fmt.Sprintf("%s\n\n💀 *ALL IN* 💀\n*%s* поставил всё (%d %s) и проебал всё!\n\nЛУДИК EБAHЫЙ!!!\n\n📊 *Балик:* 000000 зраз",
 				slotDisplay, userFirstName, total, formatZrazyGenitive(total))
 		}
 
@@ -801,13 +801,6 @@ func main() {
 			return nil
 		}
 
-		dbPath := getDBPath()
-		db, err := sql.Open("sqlite", dbPath)
-		if err != nil {
-			return nil
-		}
-		defer db.Close()
-
 		db.Exec("INSERT INTO users (user_id, message_count) VALUES (?, 1) ON CONFLICT(user_id) DO UPDATE SET message_count = message_count + 1", userID)
 
 		var msgCount int
@@ -868,58 +861,10 @@ func parseAmount(s string) (int, error) {
 	return amount, nil
 }
 
-func initDB() {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            user_name TEXT DEFAULT '',
-            total INTEGER DEFAULT 0,
-            max_total INTEGER DEFAULT 0,
-            last_used INTEGER DEFAULT 0,
-            shit_total INTEGER DEFAULT 0,
-            steal_cooldown INTEGER DEFAULT 0,
-            slot_cooldown INTEGER DEFAULT 0,
-            all_cooldown INTEGER DEFAULT 0,
-            lucky_count INTEGER DEFAULT 0,
-            steal_success INTEGER DEFAULT 0,
-            steal_fail INTEGER DEFAULT 0,
-            give_total INTEGER DEFAULT 0,
-            has_base_perk INTEGER DEFAULT 0,
-            has_plus_perk INTEGER DEFAULT 0,
-            has_prime_perk INTEGER DEFAULT 0,
-            has_balabol INTEGER DEFAULT 0,
-            has_gigabalabol INTEGER DEFAULT 0,
-            has_jew INTEGER DEFAULT 0,
-            has_bmw INTEGER DEFAULT 0,
-            has_antigovno INTEGER DEFAULT 0,
-            message_count INTEGER DEFAULT 0,
-            last_daily_reward TEXT DEFAULT ''
-        )
-    `)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func hasPerk(userID int64, column string) bool {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return false
-	}
-	defer db.Close()
-
 	var val int
 	query := fmt.Sprintf("SELECT %s FROM users WHERE user_id = ?", column)
-	err = db.QueryRow(query, userID).Scan(&val)
+	err := db.QueryRow(query, userID).Scan(&val)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false
@@ -931,31 +876,15 @@ func hasPerk(userID int64, column string) bool {
 }
 
 func buyPerk(userID int64, column string) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
 	query := fmt.Sprintf("UPDATE users SET %s = 1 WHERE user_id = ?", column)
-	_, err = db.Exec(query, userID)
+	_, err := db.Exec(query, userID)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
 }
 
 func addZrazy(userID int64, userName string, amount int) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, user_name, total) VALUES (?, ?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET 
 			total = total + ?,
@@ -971,15 +900,7 @@ func addZrazy(userID int64, userName string, amount int) {
 }
 
 func resetZrazy(userID int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		UPDATE users SET total = 0 WHERE user_id = ?
 	`, userID)
 	if err != nil {
@@ -988,45 +909,21 @@ func resetZrazy(userID int64) {
 }
 
 func resetSlotCooldown(userID int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`UPDATE users SET slot_cooldown = 0 WHERE user_id = ?`, userID)
+	_, err := db.Exec(`UPDATE users SET slot_cooldown = 0 WHERE user_id = ?`, userID)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
 }
 
 func resetAllCooldown(userID int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`UPDATE users SET all_cooldown = 0 WHERE user_id = ?`, userID)
+	_, err := db.Exec(`UPDATE users SET all_cooldown = 0 WHERE user_id = ?`, userID)
 	if err != nil {
 		log.Println("DB error:", err)
 	}
 }
 
 func addShit(userID int64, userName string, amount int) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, user_name, shit_total) VALUES (?, ?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET 
 			shit_total = shit_total + ?,
@@ -1038,15 +935,7 @@ func addShit(userID int64, userName string, amount int) {
 }
 
 func incrementLuckyCount(userID int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, lucky_count) VALUES (?, 1)
 		ON CONFLICT(user_id) DO UPDATE SET lucky_count = lucky_count + 1
 	`, userID)
@@ -1056,15 +945,7 @@ func incrementLuckyCount(userID int64) {
 }
 
 func incrementStealSuccess(userID int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, steal_success) VALUES (?, 1)
 		ON CONFLICT(user_id) DO UPDATE SET steal_success = steal_success + 1
 	`, userID)
@@ -1074,15 +955,7 @@ func incrementStealSuccess(userID int64) {
 }
 
 func incrementStealFail(userID int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, steal_fail) VALUES (?, 1)
 		ON CONFLICT(user_id) DO UPDATE SET steal_fail = steal_fail + 1
 	`, userID)
@@ -1092,15 +965,7 @@ func incrementStealFail(userID int64) {
 }
 
 func incrementGive(userID int64, amount int) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, give_total) VALUES (?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET give_total = give_total + ?
 	`, userID, amount, amount)
@@ -1110,16 +975,8 @@ func incrementGive(userID int64, amount int) {
 }
 
 func getTotal(userID int64) int {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return 0
-	}
-	defer db.Close()
-
 	var total int
-	err = db.QueryRow("SELECT total FROM users WHERE user_id = ?", userID).Scan(&total)
+	err := db.QueryRow("SELECT total FROM users WHERE user_id = ?", userID).Scan(&total)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0
@@ -1131,16 +988,8 @@ func getTotal(userID int64) int {
 }
 
 func getLastUsed(userID int64) int64 {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return 0
-	}
-	defer db.Close()
-
 	var lastUsed int64
-	err = db.QueryRow("SELECT last_used FROM users WHERE user_id = ?", userID).Scan(&lastUsed)
+	err := db.QueryRow("SELECT last_used FROM users WHERE user_id = ?", userID).Scan(&lastUsed)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0
@@ -1152,16 +1001,8 @@ func getLastUsed(userID int64) int64 {
 }
 
 func getAllCooldown(userID int64) int64 {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return 0
-	}
-	defer db.Close()
-
 	var allCooldown int64
-	err = db.QueryRow("SELECT all_cooldown FROM users WHERE user_id = ?", userID).Scan(&allCooldown)
+	err := db.QueryRow("SELECT all_cooldown FROM users WHERE user_id = ?", userID).Scan(&allCooldown)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0
@@ -1173,37 +1014,17 @@ func getAllCooldown(userID int64) int64 {
 }
 
 func getLastDailyReward(userID int64) string {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		return ""
-	}
-	defer db.Close()
 	var date string
 	db.QueryRow("SELECT last_daily_reward FROM users WHERE user_id = ?", userID).Scan(&date)
 	return date
 }
 
 func updateDailyReward(userID int64, date string) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		return
-	}
-	defer db.Close()
 	db.Exec("UPDATE users SET last_daily_reward = ? WHERE user_id = ?", date, userID)
 }
 
 func updateLastUsed(userID int64, timestamp int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, last_used) VALUES (?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET last_used = EXCLUDED.last_used
 	`, userID, timestamp)
@@ -1213,15 +1034,7 @@ func updateLastUsed(userID int64, timestamp int64) {
 }
 
 func updateStealCooldown(userID int64, timestamp int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO users (user_id, steal_cooldown) VALUES (?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET steal_cooldown = EXCLUDED.steal_cooldown
 	`, userID, timestamp)
@@ -1231,15 +1044,7 @@ func updateStealCooldown(userID int64, timestamp int64) {
 }
 
 func updateSlotCooldown(userID int64, timestamp int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
         INSERT INTO users (user_id, slot_cooldown) VALUES (?, ?)
         ON CONFLICT(user_id) DO UPDATE SET slot_cooldown = EXCLUDED.slot_cooldown
     `, userID, timestamp)
@@ -1249,15 +1054,7 @@ func updateSlotCooldown(userID int64, timestamp int64) {
 }
 
 func updateAllCooldown(userID int64, timestamp int64) {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec(`
+	_, err := db.Exec(`
         INSERT INTO users (user_id, all_cooldown) VALUES (?, ?)
         ON CONFLICT(user_id) DO UPDATE SET all_cooldown = EXCLUDED.all_cooldown
     `, userID, timestamp)
@@ -1267,14 +1064,6 @@ func updateAllCooldown(userID int64, timestamp int64) {
 }
 
 func getLeaderboard(limit int) []userStats {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return nil
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
 		SELECT user_name, total FROM users 
 		WHERE total > 0 
@@ -1301,14 +1090,6 @@ func getLeaderboard(limit int) []userStats {
 }
 
 func getMaxTotalLeaderboard(limit int) []userMaxTotalStats {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return nil
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
 		SELECT user_name, max_total FROM users 
 		WHERE max_total > 0 
@@ -1335,14 +1116,6 @@ func getMaxTotalLeaderboard(limit int) []userMaxTotalStats {
 }
 
 func getShitLeaderboard(limit int) []userStats {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return nil
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
 		SELECT user_name, shit_total FROM users 
 		WHERE shit_total > 0 
@@ -1369,16 +1142,8 @@ func getShitLeaderboard(limit int) []userStats {
 }
 
 func getStealCooldown(userID int64) int64 {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return 0
-	}
-	defer db.Close()
-
 	var stealCooldown int64
-	err = db.QueryRow("SELECT steal_cooldown FROM users WHERE user_id = ?", userID).Scan(&stealCooldown)
+	err := db.QueryRow("SELECT steal_cooldown FROM users WHERE user_id = ?", userID).Scan(&stealCooldown)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0
@@ -1390,14 +1155,6 @@ func getStealCooldown(userID int64) int64 {
 }
 
 func getLuckyLeaderboard(limit int) []userCountStats {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return nil
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
 		SELECT user_name, lucky_count FROM users 
 		WHERE lucky_count > 0 
@@ -1424,14 +1181,6 @@ func getLuckyLeaderboard(limit int) []userCountStats {
 }
 
 func getStealLeaderboard(limit int) []userCountStats {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return nil
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
 		SELECT user_name, steal_success FROM users 
 		WHERE steal_success > 0 
@@ -1458,14 +1207,6 @@ func getStealLeaderboard(limit int) []userCountStats {
 }
 
 func getGiveLeaderboard(limit int) []userGiveStats {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return nil
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
 		SELECT user_name, give_total FROM users 
 		WHERE give_total > 0 
@@ -1492,16 +1233,8 @@ func getGiveLeaderboard(limit int) []userGiveStats {
 }
 
 func getSlotCooldown(userID int64) int64 {
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Println("DB error:", err)
-		return 0
-	}
-	defer db.Close()
-
 	var slotCooldown int64
-	err = db.QueryRow("SELECT slot_cooldown FROM users WHERE user_id = ?", userID).Scan(&slotCooldown)
+	err := db.QueryRow("SELECT slot_cooldown FROM users WHERE user_id = ?", userID).Scan(&slotCooldown)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0
@@ -1516,13 +1249,6 @@ func distributeJewTax(loserID int64, lostAmount int) {
 	if lostAmount <= 0 {
 		return
 	}
-
-	dbPath := getDBPath()
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		return
-	}
-	defer db.Close()
 
 	rows, err := db.Query("SELECT user_id, user_name FROM users WHERE has_jew = 1 AND user_id != ?", loserID)
 	if err != nil {
