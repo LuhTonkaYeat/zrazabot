@@ -183,6 +183,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	dbPath := getDBPath()
+	db, err = sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	db.SetMaxOpenConns(1)
 	db.Exec("PRAGMA journal_mode=WAL;")
 
