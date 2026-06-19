@@ -459,8 +459,8 @@ func main() {
 		incrementGive(userID, amount)
 		targetTotal := getTotal(targetUserID)
 
-		return sendToTopic(b, c, fmt.Sprintf("🎁🎁🎁 ЮХУУУ, *%s* подарил %d %s пользователю *%s*!\n\nБалик: %d %s",
-			userName, amount, formatZrazyAccusative(amount), targetName, targetTotal, formatZrazyGenitive(targetTotal)))
+		return sendToTopic(b, c, fmt.Sprintf("🎁🎁🎁 ЮХУУУ, *%s* подарил %d %s пользователю *%s*!\n\n📊 Балик: %d %s",
+			userName, amount, formatZrazyAccusative(amount), targetName, targetTotal, formatZrazyAccusative(targetTotal)))
 	})
 
 	b.Handle("/slot", func(c tele.Context) error {
