@@ -488,7 +488,7 @@ func main() {
 
 		lastSlot := getSlotCooldown(userID)
 		now := time.Now().Unix()
-		cooldownTime := int64(300)
+		cooldownTime := int64(180)
 
 		if hasBMW := hasPerk(userID, "has_bmw"); hasBMW {
 			cooldownTime = int64(float64(cooldownTime) * 0.75)
