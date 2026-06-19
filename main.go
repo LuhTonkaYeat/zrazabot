@@ -618,55 +618,55 @@ func main() {
 
 		message := "🛒 *МАГАЗИН ПЕРКОВ*\n\n"
 
-		message += "🥄 *Base Perk* — 150 зраз\n   Ежедневно +3 зразы в 10:00\n"
+		message += "🥄 *Base Perk* — 150 зраз\n— Ежедневно +3 зразы после 10:00\n"
 		if hasBase {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "🥄 *Plus Perk* — 500 зраз\n   Ежедневно +10 зраз в 9:30\n"
+		message += "🥄 *Plus Perk* — 500 зраз\n— Ежедневно +10 зраз после 9:30\n"
 		if hasPlus {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "👑 *Prime Perk* — 1000 зраз\n   Ежедневно +15 зраз в 9:00 + статус в чате\n"
+		message += "👑 *Prime Perk* — 1000 зраз\n— Ежедневно +15 зраз после 9:00 + статус в чате\n"
 		if hasPrime {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "💬 *Balabol* — 800 зраз\n   +10 зраз за каждые 50 сообщений\n"
+		message += "💬 *Balabol* — 800 зраз\n— +10 зраз за каждые 50 сообщений\n"
 		if hasBalabol {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "💬 *Gigabalabol* — 2500 зраз\n   +30 зраз за каждые 50 сообщений\n"
+		message += "💬 *Gigabalabol* — 2500 зраз\n— +30 зраз за каждые 50 сообщений\n"
 		if hasGiga {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "💰 *Jew* — 5000 зраз\n   3%% от проигрышей других в казино\n"
+		message += "💰 *Jew* — 5000 зраз\n— 3%% от проигрышей других в казино\n"
 		if hasJew {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "🚗 *BMW M4 Owner* — 480 зраз\n   -25%% ко всем кулдаунам\n"
+		message += "🚗 *BMW M4 Owner* — 480 зраз\n— -25%% ко всем кулдаунам\n"
 		if hasBMW {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "🛡️ *Antigovno* — 1500 зраз\n   Шанс обнуления ↓ до 2%%\n"
+		message += "🛡️ *Antigovno* — 1500 зраз\n— Шанс обнуления ↓ до 2%%\n"
 		if hasAntiGovno {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += fmt.Sprintf("\n💰 *Твой баланс:* %d %s", total, formatZrazyNominative(total))
+		message += fmt.Sprintf("\n💰 *Твой балик:* %d %s", total, formatZrazyNominative(total))
 
 		var buttons []tele.InlineButton
 		if !hasBase {
@@ -704,7 +704,7 @@ func main() {
 		}
 
 		if len(buttons) == 0 {
-			message += "\n\n✨ *Все перки уже куплены!*"
+			message += "\n\n✨ *Все перки уже куплены! Eбaный богач...*"
 			return sendToTopic(b, c, message)
 		}
 
