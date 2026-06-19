@@ -14,6 +14,8 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+var db *sql.DB
+
 var garnishes = []string{
 	"🍝 макароны с подливкой",
 	"🍚 рис с подливкой",
@@ -181,7 +183,39 @@ func main() {
 		log.Fatal(err)
 	}
 
-	initDB()
+	db.SetMaxOpenConns(1)
+	db.Exec("PRAGMA journal_mode=WAL;")
+
+	_, err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            user_name TEXT DEFAULT '',
+            total INTEGER DEFAULT 0,
+            max_total INTEGER DEFAULT 0,
+            last_used INTEGER DEFAULT 0,
+            shit_total INTEGER DEFAULT 0,
+            steal_cooldown INTEGER DEFAULT 0,
+            slot_cooldown INTEGER DEFAULT 0,
+            all_cooldown INTEGER DEFAULT 0,
+            lucky_count INTEGER DEFAULT 0,
+            steal_success INTEGER DEFAULT 0,
+            steal_fail INTEGER DEFAULT 0,
+            give_total INTEGER DEFAULT 0,
+            has_base_perk INTEGER DEFAULT 0,
+            has_plus_perk INTEGER DEFAULT 0,
+            has_prime_perk INTEGER DEFAULT 0,
+            has_balabol INTEGER DEFAULT 0,
+            has_gigabalabol INTEGER DEFAULT 0,
+            has_jew INTEGER DEFAULT 0,
+            has_bmw INTEGER DEFAULT 0,
+            has_antigovno INTEGER DEFAULT 0,
+            message_count INTEGER DEFAULT 0,
+            last_daily_reward TEXT DEFAULT ''
+        )
+    `)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	b.Handle("/zraza", func(c tele.Context) error {
 		userID := c.Sender().ID
