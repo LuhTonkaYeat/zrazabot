@@ -236,12 +236,12 @@ func main() {
 
 			if hasPerk(userID, "has_prime_perk") && nowTime.Hour() >= 9 {
 				addZrazy(userID, userName, 15)
-				rewardMsg += "+15 🥣 (Prime)\n\n_Доброго времени суток, прайм юзер! Остальные бичи не такие пиздaтыe, как ты!!!_"
+				rewardMsg += "_Доброго времени суток, повелитель! Остальные бичи не такие пиздaтыe, как ты!!!\nЛови перки:\n\n+15 🥣 (Prime)\n\n_"
 			}
 
 			if hasPerk(userID, "has_plus_perk") && (nowTime.Hour() > 9 || (nowTime.Hour() == 9 && nowTime.Minute() >= 30)) {
 				addZrazy(userID, userName, 10)
-				rewardMsg += "+10 🥣 (Plus)\n"
+				rewardMsg += "+10 🥣 (Plus)\n\n"
 			}
 
 			if hasPerk(userID, "has_base_perk") && nowTime.Hour() >= 10 {
