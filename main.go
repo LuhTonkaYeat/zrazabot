@@ -236,7 +236,7 @@ func main() {
 
 			if hasPerk(userID, "has_prime_perk") && nowTime.Hour() >= 9 {
 				addZrazy(userID, userName, 15)
-				rewardMsg += "_Доброго времени суток, повелитель! Остальные бичи не такие пиздaтыe, как ты!!!\nЛови перки:\n\n+15 🥣 (Prime)\n\n_"
+				rewardMsg += "_Доброго времени суток, повелитель! Остальные бичи не такие пиздaтыe, как ты!!!\nЛови перки:_\n\n*+15 🥣 (Prime)*\n\n"
 			}
 
 			if hasPerk(userID, "has_plus_perk") && (nowTime.Hour() > 9 || (nowTime.Hour() == 9 && nowTime.Minute() >= 30)) {
@@ -271,7 +271,7 @@ func main() {
 			incrementLuckyCount(userID)
 			updateLastUsed(userID, now)
 			garnish := garnishes[rand.Intn(len(garnishes))]
-			return sendToTopic(b, c, fmt.Sprintf("_✨✨✨ ЧУДО! ЧЗХХХ!!!_\n*%s* _нашел заначку и сожрал 67 eбaныx зраз с %s!!!_\n\n🍽_ /zraza_",
+			return sendToTopic(b, c, fmt.Sprintf("_✨✨✨ ЧУДО! ЧЗХХХ!!!_\n*%s* _нашел заначку и сожрал 67 eбaныx зраз и %s!!!_\n\n🍽_ /zraza_",
 				userName, garnish))
 		}
 
