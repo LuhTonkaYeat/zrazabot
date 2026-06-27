@@ -63,8 +63,6 @@ func initDB() {
 	}
 }
 
-// --- Helper DB Functions ---
-
 func hasPerk(userID int64, column string) bool {
 	var val int
 	query := fmt.Sprintf("SELECT %s FROM users WHERE user_id = ?", column)
@@ -290,8 +288,6 @@ func resetAllCooldown(userID int64) {
 		log.Println("DB error:", err)
 	}
 }
-
-// --- Leaderboards ---
 
 func getLeaderboard(limit int) []userStats {
 	rows, err := db.Query(`SELECT user_name, total FROM users WHERE total > 0 ORDER BY total DESC LIMIT ?`, limit)

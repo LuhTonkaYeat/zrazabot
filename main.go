@@ -37,7 +37,6 @@ func main() {
 
 	log.Println("Бот запущен! Напиши /zraza в Telegram")
 
-	// Graceful shutdown
 	go func() {
 		b.Start()
 	}()
