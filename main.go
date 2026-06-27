@@ -647,19 +647,19 @@ func main() {
 		}
 		message += "\n"
 
-		message += "💰 *Jew* — 5000 зраз\n— 3%% от проигрышей других в казино\n"
+		message += "💰 *Jew* — 5000 зраз\n— 3% от проигрышей других в казино\n"
 		if hasJew {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "🚗 *BMW M4 Owner* — 480 зраз\n— -25%% ко всем кулдаунам\n"
+		message += "🚗 *BMW M4 Owner* — 480 зраз\n— -25% ко всем кулдаунам\n"
 		if hasBMW {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "🛡️ *Antigovno* — 1500 зраз\n— Шанс обнуления ↓ до 2%%\n"
+		message += "🛡️ *Antigovno* — 1500 зраз\n— Шанс обнуления ↓ до 2%\n"
 		if hasAntiGovno {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
