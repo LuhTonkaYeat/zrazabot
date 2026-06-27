@@ -2,7 +2,7 @@ BINARY_NAME=zrazabot
 GO=go
 
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -o $(BINARY_NAME) main.go
+	GO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -o $(BINARY_NAME) .
 	git add $(BINARY_NAME) main.go
 
 run:
