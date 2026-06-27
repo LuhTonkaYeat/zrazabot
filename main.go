@@ -232,19 +232,18 @@ func main() {
 
 		if lastReward != today {
 			rewardMsg := ""
-			nowTime := time.Now()
 
-			if hasPerk(userID, "has_prime_perk") && nowTime.Hour() >= 9 {
+			if hasPerk(userID, "has_prime_perk") {
 				addZrazy(userID, userName, 15)
-				rewardMsg += "_Доброго времени суток, повелитель! Остальные бичи не такие пиздaтыe, как ты!!!\nЛови перки:_\n\n*+15 🥣 (Prime)*\n\n"
+				rewardMsg += "_Доброго времени суток, богач! Остальные бичи не такие пиздaтыe, как ты!!!\nЛови перки:_\n\n*+15 🥣 (Prime)*\n\n"
 			}
 
-			if hasPerk(userID, "has_plus_perk") && (nowTime.Hour() > 9 || (nowTime.Hour() == 9 && nowTime.Minute() >= 30)) {
+			if hasPerk(userID, "has_plus_perk") {
 				addZrazy(userID, userName, 10)
 				rewardMsg += "+10 🥣 (Plus)\n\n"
 			}
 
-			if hasPerk(userID, "has_base_perk") && nowTime.Hour() >= 10 {
+			if hasPerk(userID, "has_base_perk") {
 				addZrazy(userID, userName, 3)
 				rewardMsg += "+3 🥣 (Base)\n"
 			}
@@ -618,19 +617,19 @@ func main() {
 
 		message := "🛒 *МАГАЗИН ПЕРКОВ*\n\n"
 
-		message += "🥄 *Base Perk* — 150 зраз\n— Ежедневно +3 зразы после 10:00\n"
+		message += "🥄 *Base Perk* — 150 зраз\n— Ежедневно +3 зразы (после 00:00)\n"
 		if hasBase {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "🥄 *Plus Perk* — 500 зраз\n— Ежедневно +10 зраз после 9:30\n"
+		message += "🥄 *Plus Perk* — 500 зраз\n— Ежедневно +10 зраз (после 00:00)\n"
 		if hasPlus {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
 		message += "\n"
 
-		message += "👑 *Prime Perk* — 1000 зраз\n— Ежедневно +15 зраз после 9:00 + статус в чате\n"
+		message += "👑 *Prime Perk* — 1000 зраз\n— Ежедневно +15 зраз (после 00:00) + статус в чате\n"
 		if hasPrime {
 			message += "   ✅ *КУПЛЕНО*\n"
 		}
