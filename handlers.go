@@ -347,8 +347,8 @@ func handleAll(c tele.Context) error {
 	now := time.Now().Unix()
 	cooldownAll := int64(10800)
 
-	if hasBMW := hasPerk(userID, "has_bmw"); hasBMW {
-		cooldownAll = int64(float64(cooldownAll) * 0.75)
+	if hasPerk(userID, "has_bmw") {
+		cooldownAll = int64(8100)
 	}
 
 	if now-lastAll < cooldownAll && lastAll != 0 {
