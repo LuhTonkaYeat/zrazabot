@@ -290,8 +290,8 @@ func handleSlot(c tele.Context) error {
 	now := time.Now().Unix()
 	cooldownTime := int64(180)
 
-	if hasBMW := hasPerk(userID, "has_bmw"); hasBMW {
-		cooldownTime = int64(float64(cooldownTime) * 0.75)
+	if hasPerk(userID, "has_bmw") {
+		cooldownTime = int64(135)
 	}
 
 	if now-lastSlot < cooldownTime && lastSlot != 0 {
