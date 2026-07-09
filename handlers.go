@@ -291,7 +291,7 @@ func handleSlot(c tele.Context) error {
 	cooldownTime := int64(180)
 
 	if hasPerk(userID, "has_bmw") {
-		cooldownTime = int64(135)
+		cooldownTime = int64(90)
 	}
 
 	if now-lastSlot < cooldownTime && lastSlot != 0 {
@@ -348,7 +348,7 @@ func handleAll(c tele.Context) error {
 	cooldownAll := int64(10800)
 
 	if hasPerk(userID, "has_bmw") {
-		cooldownAll = int64(8100)
+		cooldownAll = int64(5400)
 	}
 
 	if now-lastAll < cooldownAll && lastAll != 0 {
