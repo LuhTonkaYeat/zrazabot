@@ -57,8 +57,14 @@ func handleZraza(c tele.Context) error {
 
 	lastUsed := getLastUsed(userID)
 	now := time.Now().Unix()
-	if now-lastUsed < 1800 && lastUsed != 0 {
-		secondsLeft := 1800 - (now - lastUsed)
+	cooldownZraza := int64(1800)
+
+	if hasPerk(userID, "has_bmw") {
+		cooldownZraza = int64(900)
+	}
+
+	if now-lastUsed < cooldownZraza && lastUsed != 0 {
+		secondsLeft := cooldownZraza - (now - lastUsed)
 		timeLeft := formatCooldown(secondsLeft)
 		return sendToTopic(b, c, fmt.Sprintf("⏰ _%s, сначала нагуляй аппетyeat!!!_\n_Осталось ждать: %s_\n\n🍽_ /zraza_",
 			userName, timeLeft))
@@ -187,8 +193,14 @@ func handleSteal(c tele.Context) error {
 
 	stealCooldown := getStealCooldown(userID)
 	now := time.Now().Unix()
-	if now-stealCooldown < 3600*5 && stealCooldown != 0 {
-		secondsLeft := 3600*5 - (now - stealCooldown)
+	cooldownSteal := int64(3600 * 5)
+
+	if hasPerk(userID, "has_bmw") {
+		cooldownSteal = int64(3600 * 2.5)
+	}
+
+	if now-stealCooldown < cooldownSteal && stealCooldown != 0 {
+		secondsLeft := cooldownSteal - (now - stealCooldown)
 		timeLeft := formatCooldown(secondsLeft)
 		return sendToTopic(b, c, fmt.Sprintf("⏰ Не, %s, додепа не будет!\n_Попробуй тырнуть через: %s_\n\n🍽 А лучше сам похавай /zraza",
 			userName, timeLeft))
@@ -454,7 +466,7 @@ func handleShop(c tele.Context) error {
 	}
 	message += "\n"
 
-	message += "🚗 *BMW M4 Owner* — 480 зраз\n— -25% ко всем кулдаунам\n"
+	message += "🚗 *BMW M4 Owner* — 480 зраз\n— -50% ко всем кулдаунам\n"
 	if hasBMW {
 		message += "   ✅ *КУПЛЕНО*\n"
 	}
